@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie-edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Graph Visualization</title>
+    <link rel="stylesheet" href="/stylesheets/jquery.qtip.min.css" />
+    <link rel="stylesheet" href="/stylesheets/foundation.css" />
+    <link rel="stylesheet" href="/stylesheets/graphd3.css" />
+  </head>
+
+  <body>
+    <header>
+      <div class="nav-top">
+        <div class="row">
+          <div class="small-12 columns">
+            <span class="heading">RESE2NSE</span>
+            <span class="sub-heading">Resilient Sensory Swarms for Smart Energy and Environmental Monitoring</span>
+          </div> <!-- end .columns -->
+        </div> <!-- end .row -->
+      </div> <!-- end .nav-top -->
+    </header> <!-- end header -->
+
+    <nav class="main-nav">
+      <div class="nav-links">
+        <div class="row">
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/graph">Graph</a></li>
+          </ul>
+        </div> <!-- end .row -->
+      </div> <!-- end .nav-links -->
+    </nav> <!-- end nav -->
+
+    <div class="main">
+      <div class="row">
+
+        <div class="small-3 columns">
+          <div class="nav-side">
+            <div class="floor-links">
+              <ul>
+                <li><span class="heading">EEE FLOOR PLAN</span><li>
+                <li><span class="floor-link" data-floor-number=1>Floor 1</span></li>
+                <li><span class="floor-link" data-floor-number=2>Floor 2</span></li>
+                <li><span class="floor-link" data-floor-number=3>Floor 3</span></li>
+                <li><span class="floor-link" data-floor-number=4>Floor 4</span></li>
+              </ul>
+            </div> <!-- end .floor-links -->
+          </div> <!-- end .nav-side -->
+        </div> <!-- end .columns -->
+
+        <div class="small-9 columns">
+          <div class="floor-group">
+
+            <div class="floor" id="floor1">
+              <div class="floor-label">
+                <span>Floor 1</span>
+                <button type="button" class="success button edit-btn" data-floor-number=1>Edit Graph</button>
+              </div> <!-- end .floor-label -->
+              <div class="floor-graph">
+                <div class='graph-container'>
+                  <img src='/images/floorplan7.jpg' class="floor-img" id='floor1-img'>
+                </div> <!-- end .graph-container -->
+              </div> <!-- end .floor-graph -->
+            </div> <!-- end .floor#floor1 -->
+
+            <div class="floor" id="floor2">
+              <div class="floor-label">
+                <span>Floor 2</span>
+                <button type="button" class="success button edit-btn" data-floor-number=2>Edit Graph</button>
+              </div> <!-- end .floor-label -->
+              <div class="floor-graph">
+                <div class='graph-container'>
+                  <img src='/images/floorplan7.jpg' class="floor-img" id='floor2-img'>
+                </div> <!-- end .graph-container -->
+              </div> <!-- end .floor-graph -->
+            </div> <!-- end .floor#floor2 -->
+
+            <div class="floor" id="floor3">
+              <div class="floor-label">
+                <span>Floor 3</span>
+                <button type="button" class="success button edit-btn" data-floor-number=3>Edit Graph</button>
+              </div> <!-- end .floor-label -->
+              <div class="floor-graph">
+                <div class='graph-container'>
+                  <img src='/images/floorplan7.jpg' class="floor-img" id='floor3-img'>
+                </div> <!-- end .graph-container -->
+              </div> <!-- end .floor-graph -->
+            </div> <!-- end .floor#floor3 -->
+
+            <div class="floor" id="floor4">
+              <div class="floor-label">
+                <span>Floor 4</span>
+                <button type="button" class="success button edit-btn" data-floor-number=4>Edit Graph</button>
+              </div> <!-- end .floor-label -->
+              <div class="floor-graph">
+                <div class='graph-container'>
+                  <img src='/images/floorplan7.jpg' class="floor-img" id='floor4-img'>
+                </div> <!-- end .graph-container -->
+              </div> <!-- end .floor-graph -->
+            </div> <!-- end .floor#floor3 -->
+
+          </div> <!-- end .floor-group -->
+        </div> <!-- end .columns -->
+      </div> <!-- end .row -->
+    </div> <!-- end .main -->
+
+  </body>
+
+  <script></script>
+  <script src="/javascripts/jquery-2.2.0.min.js"></script>
+  <script src="/javascripts/foundation.min.js"></script>
+  <script src="/javascripts/d3.v3.min.js"></script>
+  <script src="/javascripts/jquery.qtip.min.js"></script>
+  <script src="/javascripts/graph.js"></script>
+</html>

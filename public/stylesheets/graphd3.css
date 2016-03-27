@@ -1,0 +1,254 @@
+div#graph-container, div#graph-legend {
+  /*padding: 10px;*/
+  height: 400px;
+}
+
+div#graph-container > svg {
+  border: 1px solid black;
+}
+
+.square {
+  width: 20px;
+  height: 20px;
+  margin-right: 7px;
+  display: inline-block;
+  border: 2px solid black;
+  border-radius: 5px;
+}
+
+#heavy-traffic {
+  background-color: #FF0000;
+}
+
+#moderate-traffic {
+  background-color: #0000CD;
+}
+
+#light-traffic {
+  background-color: #008000;
+}
+
+.traffic-type, .node-type {
+  display: inline-block;
+  position: absolute;
+  top: 0px;
+  font-size: 11px;
+}
+
+.traffic-row, .node-row {
+  position: relative;
+}
+
+#temperature-node {
+  background-color: #FFF44D;
+}
+
+#humidity-node {
+  background-color: #E8850C;
+}
+
+#light-intensity-node {
+  background-color: #FF0093;
+}
+
+#pressure-node {
+  background-color: #76FFED;
+}
+
+.qtip.tooltip {
+  border: 3px solid #F1D031;
+}
+
+.custom-tooltip .qtip-title {
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.custom-tooltip .qtip-content {
+  line-height: 17px;
+}
+
+.tooltip-row {
+  font-size: 12px;
+}
+
+
+/* new 3/24/16 */
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+.main-nav {
+  position: relative;
+  z-index: 150;
+}
+
+.main-nav-scrolled {
+  position: fixed;
+  top: 0px;
+  width: 100%;
+}
+
+.main {
+  padding: 54px 50px 0px;
+}
+
+.nav-top {
+  background-color: #08E067;
+  color: white;
+  text-align: center;
+  padding: 21px 0px;
+  margin-bottom: 1px;
+}
+
+.nav-top .sub-heading {
+  font-size: 18px;
+}
+
+.nav-top .heading {
+  font-size: 42px;
+  display: block;
+}
+
+.nav-links {
+  background-color: #1DC459;
+  margin-bottom: 1px;
+  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.4);
+}
+
+.nav-links .row {
+  border-left: 1px solid #07BA55;
+}
+
+.nav-links ul {
+  list-style-type: none; /* remove the bullets of the list entries */
+  /* remove browser default settings */
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links ul li {
+  float: left;
+}
+
+.nav-links ul li a {
+  display: inline-block;
+  color: white;
+  text-align: center;
+  padding: 14px 27px;
+  text-decoration: none;
+  font-size: 16px;
+  border-right: 1px solid #07BA55;
+  transition: background-color 0.1s ease-out;
+}
+
+.nav-links ul li a:hover {
+  background-color: #377F51;
+  transition: background-color 0.1s ease-out;
+}
+
+.nav-side {
+  margin-top: 44px;
+  padding: 17px 0px;
+  background-color: #F4FFF4;
+}
+
+.nav-side .floor-links {
+  border-bottom: 1px solid #a8efc0;
+}
+
+.nav-side-scrolled {
+  position: fixed;
+  top: 57px;
+}
+
+.nav-side .floor-links ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-side .floor-links ul li .heading {
+  pointer-events: none;
+  padding: 7px 20px;
+  color: #4d4e53;
+  text-transform: capitalize;
+  font-size: 1rem;
+  display: block;
+  text-decoration: none;
+}
+
+.nav-side .floor-links ul li .floor-link {
+  cursor: pointer;
+  display: block;
+  color: #10A751;
+  font-size: 0.9rem;
+  padding: 5px 20px;
+}
+
+.nav-side .floor-links ul li .floor-link:hover {
+  color: white;
+  background-color: #1DC459;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+  margin-top: 14px;
+  margin-right: 10px;
+}
+
+.floor-group {
+  margin: 44px 0px;
+}
+
+.floor-group .floor-label {
+  margin-bottom: 10px;
+}
+
+.floor-group .floor-label span {
+  background-color: #047033;
+  color: white;
+  padding: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 18px;
+  text-decoration: none;
+  pointer-events: none;
+  margin-right: 10px;
+}
+
+.graph-container {
+  height: 400px;
+}
+
+.floor-group .floor {
+  padding-bottom: 58px;
+}
+
+.configure-buttons .button.edit {
+  background-color: #1DC459;
+  transition: background-color 0.15s ease-out;
+}
+
+.configure-buttons .button.edit:hover {
+  background-color: #377F51;
+  transition: background-color 0.15s ease-out;
+}
+
+.floor-img {
+  position: absolute;
+  z-index: 1;
+  border: solid 4px #FEFEFE;
+  box-shadow: 0 0 2px 1px rgba(10,10,10,0.1);
+}
+
+svg {
+  z-index: 2;
+  position: absolute;
+}
+
+/*svg:hover {*/
+  /*box-shadow: 0 0 5px 3px rgba(127, 208, 225, 0.3);*/
+  /*transition: box-shadow 0.15s ease-out;*/
+/*}*/

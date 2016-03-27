@@ -1,0 +1,27 @@
+body {
+  padding: 0px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+#graph-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 1px solid black;
+}
+
+#graph-form {
+  position: absolute;
+  width: 455px;
+  height: 92px;
+  top: 81px;
+  left: 185px;
+}
+
+button#editGraphBtn, button#saveGraphBtn {
+  font-size: 37px;
+}

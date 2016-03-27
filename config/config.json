@@ -1,0 +1,24 @@
+{
+  "development": {
+    "username": "rese2nse",
+    "password": "rese2nse",
+    "database": "graph",
+    "host": "localhost",
+    "port": "3306",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "mark",
+    "password": "password",
+    "database": "graph_test",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "mark",
+    "password": "password",
+    "database": "graph_production",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}
