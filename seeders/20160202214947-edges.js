@@ -5,13 +5,14 @@ module.exports = {
     queryInterface.bulkDelete('Edges', null, {});
 
     var edges = [];
-    var N = 40;
     var traffic = ['heavy', 'moderate', 'light'];
     var floors = 4;
+    var N = 50;
+    var N_total = N * floors;
 
     var j = 0;
     for (var i = 0; i < floors; i++) {
-      var E = 15;
+      var E = 100;
 
       var node_pairs = [];
       for (var k = 0; k < E; j++, k++) {
@@ -22,12 +23,12 @@ module.exports = {
         var pair_exist = 0;
 
         while (pair_exist !== undefined) {
-          source_index = (Math.floor(Math.random() * 10 + 1) + (i * 10));
-          target_index = (Math.floor(Math.random() * 10 + 1) + (i * 10));
+          source_index = (Math.floor(Math.random() * N + 1) + (i * N));
+          target_index = (Math.floor(Math.random() * N + 1) + (i * N));
           new_pair = {source: source_index, target: target_index};
 
           while (target_index === source_index) {
-            target_index = (Math.floor(Math.random() * 10 + 1) + (i * 10));
+            target_index = (Math.floor(Math.random() * N + 1) + (i * N));
             new_pair.target = target_index;
           }
 

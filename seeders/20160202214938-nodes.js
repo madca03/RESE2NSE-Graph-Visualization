@@ -88,48 +88,66 @@ module.exports = {
 };
 
 function get_nodes() {
-  var nodes = [
-    {node_id: 'n1', label: 'Node1', floor_number: 1},
-    {node_id: 'n2', label: 'Node2', floor_number: 1},
-    {node_id: 'n3', label: 'Node3', floor_number: 1},
-    {node_id: 'n4', label: 'Node4', floor_number: 1},
-    {node_id: 'n5', label: 'Node5', floor_number: 1},
-    {node_id: 'n6', label: 'Node6', floor_number: 1},
-    {node_id: 'n7', label: 'Node7', floor_number: 1},
-    {node_id: 'n8', label: 'Node8', floor_number: 1},
-    {node_id: 'n9', label: 'Node9', floor_number: 1},
-    {node_id: 'n10', label: 'Node10', floor_number: 1},
-    {node_id: 'n11', label: 'Node11', floor_number: 2},
-    {node_id: 'n12', label: 'Node12', floor_number: 2},
-    {node_id: 'n13', label: 'Node13', floor_number: 2},
-    {node_id: 'n14', label: 'Node14', floor_number: 2},
-    {node_id: 'n15', label: 'Node15', floor_number: 2},
-    {node_id: 'n16', label: 'Node16', floor_number: 2},
-    {node_id: 'n17', label: 'Node17', floor_number: 2},
-    {node_id: 'n18', label: 'Node18', floor_number: 2},
-    {node_id: 'n19', label: 'Node19', floor_number: 2},
-    {node_id: 'n20', label: 'Node20', floor_number: 2},
-    {node_id: 'n21', label: 'Node21', floor_number: 3},
-    {node_id: 'n22', label: 'Node22', floor_number: 3},
-    {node_id: 'n23', label: 'Node23', floor_number: 3},
-    {node_id: 'n24', label: 'Node24', floor_number: 3},
-    {node_id: 'n25', label: 'Node25', floor_number: 3},
-    {node_id: 'n26', label: 'Node26', floor_number: 3},
-    {node_id: 'n27', label: 'Node27', floor_number: 3},
-    {node_id: 'n28', label: 'Node28', floor_number: 3},
-    {node_id: 'n29', label: 'Node29', floor_number: 3},
-    {node_id: 'n30', label: 'Node30', floor_number: 3},
-    {node_id: 'n31', label: 'Node31', floor_number: 4},
-    {node_id: 'n32', label: 'Node32', floor_number: 4},
-    {node_id: 'n33', label: 'Node33', floor_number: 4},
-    {node_id: 'n34', label: 'Node34', floor_number: 4},
-    {node_id: 'n35', label: 'Node35', floor_number: 4},
-    {node_id: 'n36', label: 'Node36', floor_number: 4},
-    {node_id: 'n37', label: 'Node37', floor_number: 4},
-    {node_id: 'n38', label: 'Node38', floor_number: 4},
-    {node_id: 'n39', label: 'Node39', floor_number: 4},
-    {node_id: 'n40', label: 'Node40', floor_number: 4}
-  ];
+  var floors = 4;
+  var j = 1;
+  var nodes = [];
+
+  for (var i = 0; i < floors; i++) {
+    var N = 50;
+
+    for (var k = 0; k < N; k++) {
+        var new_node = {
+          node_id: 'n' + j,
+          label: 'Node' + j,
+          floor_number: i + 1
+        };
+        j++;
+        nodes.push(new_node);
+    }
+  }
+  //
+  // var nodes = [
+  //   {node_id: 'n1', label: 'Node1', floor_number: 1},
+  //   {node_id: 'n2', label: 'Node2', floor_number: 1},
+  //   {node_id: 'n3', label: 'Node3', floor_number: 1},
+  //   {node_id: 'n4', label: 'Node4', floor_number: 1},
+  //   {node_id: 'n5', label: 'Node5', floor_number: 1},
+  //   {node_id: 'n6', label: 'Node6', floor_number: 1},
+  //   {node_id: 'n7', label: 'Node7', floor_number: 1},
+  //   {node_id: 'n8', label: 'Node8', floor_number: 1},
+  //   {node_id: 'n9', label: 'Node9', floor_number: 1},
+  //   {node_id: 'n10', label: 'Node10', floor_number: 1},
+  //   {node_id: 'n11', label: 'Node11', floor_number: 2},
+  //   {node_id: 'n12', label: 'Node12', floor_number: 2},
+  //   {node_id: 'n13', label: 'Node13', floor_number: 2},
+  //   {node_id: 'n14', label: 'Node14', floor_number: 2},
+  //   {node_id: 'n15', label: 'Node15', floor_number: 2},
+  //   {node_id: 'n16', label: 'Node16', floor_number: 2},
+  //   {node_id: 'n17', label: 'Node17', floor_number: 2},
+  //   {node_id: 'n18', label: 'Node18', floor_number: 2},
+  //   {node_id: 'n19', label: 'Node19', floor_number: 2},
+  //   {node_id: 'n20', label: 'Node20', floor_number: 2},
+  //   {node_id: 'n21', label: 'Node21', floor_number: 3},
+  //   {node_id: 'n22', label: 'Node22', floor_number: 3},
+  //   {node_id: 'n23', label: 'Node23', floor_number: 3},
+  //   {node_id: 'n24', label: 'Node24', floor_number: 3},
+  //   {node_id: 'n25', label: 'Node25', floor_number: 3},
+  //   {node_id: 'n26', label: 'Node26', floor_number: 3},
+  //   {node_id: 'n27', label: 'Node27', floor_number: 3},
+  //   {node_id: 'n28', label: 'Node28', floor_number: 3},
+  //   {node_id: 'n29', label: 'Node29', floor_number: 3},
+  //   {node_id: 'n30', label: 'Node30', floor_number: 3},
+  //   {node_id: 'n31', label: 'Node31', floor_number: 4},
+  //   {node_id: 'n32', label: 'Node32', floor_number: 4},
+  //   {node_id: 'n33', label: 'Node33', floor_number: 4},
+  //   {node_id: 'n34', label: 'Node34', floor_number: 4},
+  //   {node_id: 'n35', label: 'Node35', floor_number: 4},
+  //   {node_id: 'n36', label: 'Node36', floor_number: 4},
+  //   {node_id: 'n37', label: 'Node37', floor_number: 4},
+  //   {node_id: 'n38', label: 'Node38', floor_number: 4},
+  //   {node_id: 'n39', label: 'Node39', floor_number: 4},
+  //   {node_id: 'n40', label: 'Node40', floor_number: 4}
+  // ];
 
   return nodes;
 }

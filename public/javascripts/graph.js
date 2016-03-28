@@ -50,7 +50,7 @@ $(function() {
   ajax_call_for_display_graph({update:false});
   var display_timer = setInterval(function() {
     ajax_call_for_display_graph({update:true});
-  }, 500);
+  }, 10000);
 
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
