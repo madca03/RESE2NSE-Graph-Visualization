@@ -59,9 +59,20 @@ div#graph-container > svg {
   border: 3px solid #F1D031;
 }
 
-.custom-tooltip .qtip-title {
+.custom-tooltip {
+  box-shadow: rgba(14, 14, 14, 0.490196) 0px 0px 5px 2px;
+  background-color: #097933;
+  color: #fefefe;
+  border: none;
+}
+
+.custom-tooltip .qtip-titlebar .qtip-title {
   font-size: 14px;
   line-height: 17px;
+}
+
+.custom-tooltip .qtip-titlebar {
+  background-color: #097933;
 }
 
 .custom-tooltip .qtip-content {

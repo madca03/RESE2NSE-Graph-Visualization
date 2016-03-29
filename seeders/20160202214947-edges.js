@@ -19,7 +19,7 @@ module.exports = {
         var source_index = null;
         var target_index = null;
         var new_pair = {};
-        var pair_exist = 0;
+        var pair_exist = null;
 
         while (pair_exist !== undefined) {
           source_index = (Math.floor(Math.random() * N + 1) + (i * N));
