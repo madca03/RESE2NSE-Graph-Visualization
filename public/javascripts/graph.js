@@ -7,7 +7,7 @@ const NODEFILL = "black";
 // link visual properties
 const LINKSTROKEOPACITY = '1';
 const LINKSTROKEWIDTH = '2px';
-const UPDATERATE = 1000000000;
+const UPDATERATE = 1000;
 
 /*************  Application starts here  *************/
 
