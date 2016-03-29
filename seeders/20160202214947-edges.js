@@ -7,12 +7,11 @@ module.exports = {
     var edges = [];
     var traffic = ['heavy', 'moderate', 'light'];
     var floors = 4;
-    var N = 50;
-    var N_total = N * floors;
+    var N = 10;
 
     var j = 0;
     for (var i = 0; i < floors; i++) {
-      var E = 100;
+      var E = 15;
 
       var node_pairs = [];
       for (var k = 0; k < E; j++, k++) {
@@ -56,27 +55,9 @@ module.exports = {
     }
 
     return queryInterface.bulkInsert('Edges', edges, {});
-
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.bulkInsert('Person', [{
-        name: 'John Doe',
-        isBetaMember: false
-      }], {});
-    */
   },
 
   down: function (queryInterface, Sequelize) {
     return queryInterface.bulkDelete('Edges', null, {});
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.bulkDelete('Person', null, {});
-    */
   }
 };

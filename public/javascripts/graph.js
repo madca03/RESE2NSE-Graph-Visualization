@@ -1,888 +1,83 @@
 "use strict"
 
-/**************************  START  **************************/
-/******  Global variables for graph and DOM properties  ******/
-
-var baseURL = 'http://localhost:3000';
-var total_floors = document.getElementsByClassName('floor').length;
-
+const BASEURL = "http://localhost:3000";
 // node visual properties
-var nodeRadius = 8;
-var nodeFill = "black";
-
+const NODERADIUS = 8;
+const NODEFILL = "black";
 // link visual properties
-var link_stroke_opacity = '1';
-var link_stroke_width = '2px';
-var control_radius = 100;
+const LINKSTROKEOPACITY = '1';
+const LINKSTROKEWIDTH = '2px';
+const UPDATERATE = 1000;
 
-// SVG stage and floorplan image properties
-var graph_container = document.getElementsByClassName('graph-container');
-var graph_container_style = window.getComputedStyle(graph_container[0]);
-var floor_img = document.getElementsByClassName('floor-img');
-var floor_img_style = window.getComputedStyle(floor_img[0]);
-var img_border = parseFloat(floor_img_style.getPropertyValue('border-top-width'));
-var container_width = parseFloat(graph_container_style.getPropertyValue('width'));
-var container_height = parseFloat(graph_container_style.getPropertyValue('height'));
-
-var w = container_width - img_border;
-var h = container_height - img_border;
-
-for (var i = 0; i < floor_img.length; i++) {
-  floor_img[i].style.width = w.toString() + 'px';
-  floor_img[i].style.height = h.toString() + 'px';
-
-  // var svg = document.createElement('svg');
-  // var stage = graph_container[i].appendChild(svg);
-  // stage.style.width = w.toString() + 'px';
-  // stage.style.height = h.toString() + 'px';
-}
-
-var svg_stage = document.getElementsByTagName('svg');
-
-/***********************  END  ***********************/
-
-
-/**********************  START  **********************/
 /*************  Application starts here  *************/
 
+var event_handler = new EventHandler();
+var graph_data = new GraphData($('.floor').length);
+var graph_drawer = new MultiGraphDrawer();
+var ui = new UI();
+
 $(function() {
-  gui_init();
-  ajax_call_for_display_graph({update:false});
+  ui.init();
+  ui.setFloorImageDimensions();
+
+  graph_data.getDataForDisplay();
   var display_timer = setInterval(function() {
-    ajax_call_for_display_graph({update:true});
-  }, 10000);
+    graph_data.getDataForDisplay();
+  }, UPDATERATE);
 
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
     clearInterval(display_timer);
-
-    // get the floor number associated with the edit button
-    var clicked_edit_btn = this;
-    var floor_number = clicked_edit_btn.dataset.floorNumber;
-
-    // detach the edit button but retain its event listeners
-    // replace it with a save button and cancel button
-    var edit_btns = $('.edit-btn').detach();
-    var floor_labels = $('.floor-label');
-
-    // remove all DOM elements inside the floor-group div
-    var floor_group = document.getElementsByClassName('floor-group')[0];
-    while (floor_group.firstChild) {
-      floor_group.removeChild(floor_group.firstChild);
-    }
-
-    // create the new floor label div with corresponding floor number
-    var new_floor_label = ''
-      + '<div class="floor" id="floor' + floor_number.toString() + '">'
-        + '<div class="floor-label">'
-          + '<span>Floor ' + floor_number.toString() + '</span>'
-          + '<button type="button" class="success button save-btn">Save Graph</button>'
-          + '<button type="button" class="success button cancel-btn">Cancel</button>'
-        + '</div> <!-- end .floor-label -->'
-        + '<div class="floor-graph">'
-          + '<div class="graph-container">'
-            + '<img src="/images/floorplan7.jpg" class="floor-img">'
-          + '</div> <!-- end .graph-container -->'
-        + '</div> <!-- end .floor-graph -->'
-      + '</div> <!-- end .floor#floor1 -->'
-
-    // add the new floor label inside the floor group div
-    floor_group.innerHTML = new_floor_label;
-
-    // add css properties to the floor image
-    var new_floor_img = document.getElementsByClassName('floor-img')[0];
-    new_floor_img.style.width = w + 'px';
-    new_floor_img.style.height = h + 'px';
-    new_floor_img.style.position = 'absolute';
-    new_floor_img.style.zIndex = '-1';
-
-    // "graph" object will be the storage of the graph data coming from
-    // the ajax call
-    var graph = {};
-    //
-    // ajax call to get graph data
-    $.ajax({
-      url: 'http://localhost:3000/nodes/' + floor_number.toString(),
-      type: 'GET',
-      dataType: 'json',
-      success: function(response) {
-        graph = {
-          nodes: response.nodes,
-          links: response.edges
-        };
-        draw_graph_for_edit(graph);
-      },
-      error: function(req, status, err) {
-        console.log(status, err);
-      }
-    });
+    event_handler.editBtnClicked(this.dataset.floorNumber);
 
     // add event handler to cancel button
     $('.cancel-btn').on('click', function() {
-      location.reload();
+      event_handler.cancelBtnClicked();
     });
 
     // add event handler to save button
     $('.save-btn').on('click', function() {
-      function get_updated_nodes() {
-        var nodes = [];
-
-        for (var i = 0; i < graph.nodes.length; i++) {
-          if (graph.nodes[i].fixed == true) {
-            nodes.push({
-              'id': graph.nodes[i].id,
-              'x': graph.nodes[i].x,
-              'y': graph.nodes[i].y
-            });
-          }
-        }
-
-        return nodes;
-      };
-
-      var updated_nodes = get_updated_nodes();
-
-      // if there are modified nodes
-      if (updated_nodes.length !== 0) {
-        $.ajax({
-          url: 'http://localhost:3000/nodes/update',
-          type: 'POST',
-          data: {nodes: JSON.stringify(updated_nodes)},
-          dataType: 'json',
-          success: function(response) {
-            location.reload();
-          },
-          error: function(req, status, err) {
-            console.log(status, err);
-          }
-        });
-      }
-      // if there are no modified nodes
-      else {
-        $('#save-graph-btn').remove();
-        $('#cancel-edit-btn').remove();
-        edit_graph_btn.appendTo($('#graph-controls'));
-
-        $('#graph-container svg').remove();
-        ajax_call_for_display_graph();
-      }
-
+      event_handler.saveBtnClicked();
     });
   });
 }); // end application block
 
 /***********************  END  ***********************/
 
-/*  This function gets the graph data containing the nodes with their
-    coordinates set and the links in between nodes. After a successful AJAX call,
-    it calls the draw_graph_for_display function and it passes to the function
-    the graph data from the AJAX call.
-*/
-function ajax_call_for_display_graph(opt) {
-  // ajax call for guest users
-  $.ajax({
-    url: 'http://localhost:3000/nodes_for_display',
-    type: 'GET',
-    dataType: 'json',
-    success: function(response) {
-      var sorted_graph = get_graph_per_floor(response, total_floors);
 
-      if (opt.update) {
-        for (var i = 0; i < total_floors; i++) {
-          update_graph_for_display(sorted_graph[i]);
-        }
-      }
-      else {
-        for (var i = 0; i < total_floors; i++) {
-          draw_graph_for_display(sorted_graph[i]);
-        }
-      }
-    },
-    error: function(req, status, err) {
-      console.log(status, err);
-    }
-  });
+/*********************  UI Class  ********************/
+
+function UI() {
+  this.svgWidth = null;
+  this.svgHeight = null;
 }
 
-/*  arguments: Graph object that contains the nodes and links information
-    return: create SVG DOM elements for the nodes and links
-
-    This function is called when the admin users would like to edit the
-    graph visual properties. All of the nodes (set and unset) are displayed
-    in the SVG stage.
-*/
-function draw_graph_for_edit(graph) {
-  // Create an SVG (Scalable Vector Graphics) for the graph visualization
-  var vis = d3.select(".graph-container").append("svg:svg")
-      .attr("width", w)
-      .attr("height", h);
-
-  // storage for modified array of links
-  var links = [];
-
-  // get the references to source and target nodes of each link
-  // given the name of the node
-  graph.links.forEach(function(link) {
-    var source_node = graph.nodes.filter(function(node) {
-      return node.id === link.source;
-    })[0];
-    var target_node = graph.nodes.filter(function(node) {
-      return node.id === link.target;
-    })[0];
-
-    links.push({
-      source: source_node,
-      target: target_node,
-      traffic: link.traffic
-    });
-  });
-
-  graph.nodes.forEach(function(node) {
-    if (node.x_coordinate !== null) {
-      node.x = node.x_coordinate;
-      node.y = node.y_coordinate;
-    }
-  });
-
-  var force = d3.layout.force()
-    .nodes(graph.nodes)
-    .links(links)
-    .size([w, h])
-    .start();
-
-  var link = vis.append("svg:g").selectAll("path.link")
-    .data(links)
-    .enter()
-    .append("svg:path")
-    .attr("class", "link")
-
-  // set the initial position (start and end points)
-  // and the curvature of the links
-  link.attr("d", function(d) {
-    var dx = d.target.x - d.source.x;
-    var dy = d.target.y - d.source.y;
-    var dr = Math.sqrt(dx * dx + dy * dy);
-
-    return "M" + d.source.x + "," + d.source.y
-      + "A" + dr + "," + dr
-      + " 0 0,1 " + d.target.x
-      + "," + d.target.y;
-  });
-
-  // add css styles to links
-  link.attr('stroke', function(d) {
-      switch (d.traffic) {
-        case 'heavy':
-          return '#FF0000';
-          break;
-        case 'moderate':
-          return '#0000CD';
-          break;
-        case 'light':
-          return '#008000';
-          break;
-      }
-    })
-    .attr('stroke-opacity', link_stroke_opacity)
-    .attr('stroke-width', function(d) {
-      switch (d.traffic) {
-        case 'heavy':
-          return '6px';
-          break;
-        case 'moderate':
-          return '3px';
-          break;
-        case 'light':
-          return '1px';
-          break;
-      }
-    })
-    .attr('fill', 'none');
-
-  // Add drag and drop functionality to the nodes
-  var node_drag = d3.behavior.drag()
-      .on("dragstart", dragstart)
-      .on("drag", dragmove)
-      .on("dragend", dragend);
-
-  /* arguments: d = node object,
-        i = index of the node object from the node array defined in the graph object
-    return: This function stops the force-layout algorithm of d3js when
-      a node is being dragged so that the force-layout will not affect the
-      placing of the node to its new position.
-  */
-  function dragstart(d, i) {
-      force.stop() // stops the force auto positioning before you start dragging
-  }
-
-  /* arguments: d = node object,
-        i = index of the node object from the node array defined in the graph object
-    return: This function saves the new coordinate of the node to px,py,x,y
-      properties of the node object. After that, the tick function is called
-      to make visual changes to the position of the node and other svg elements
-      related to it.
-  */
-  function dragmove(d, i) {
-      d.px += d3.event.dx;
-      d.py += d3.event.dy;
-      d.x += d3.event.dx;
-      d.y += d3.event.dy;
-      tick(); // this is the key to make it work together with updating both px,py,x,y on d !
-  }
-
-  /*  arguments: d = node object,
-        i = index of the node object from the node array defined in the graph object
-      return: After dragging a node, the node's "fixed" property will be set to true.
-        This will prevent the force-layout algorithm of d3js to make changes to
-        this node when other nodes are dragged.
-  */
-  function dragend(d, i) {
-      d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
-      tick();
-      force.resume();
-  }
-
-  // Create nodes by adding SVG g elements inside the SVG stage.
-  // The SVG g (group) element allows us to separate svg elements for each node.
-  var node = vis.selectAll("g.node")
-      .data(graph.nodes)
-    .enter().append("svg:g")
-      .attr("class", "node")
-      .call(node_drag);
-
-  // Add a SVG circle element that will visually represent the
-  // node inside a node group.
-  node.append("svg:circle").attr("class", "circle")
-    .attr("cx", function(d) { return "0px"; })
-    .attr("cy", function(d) { return "0px"; })
-    .attr("r", nodeRadius)
-    .attr('stroke', 'black')
-    .attr('stroke-width', '2px')
-    .attr("fill", function(d) {
-      switch (d.sensor_type) {
-        case 'Temperature':
-          return '#FFF44D';
-          break;
-        case 'Humidity':
-          return '#E8850C';
-          break;
-        case 'Light Intensity':
-          return '#FF0093';
-          break;
-        case 'Pressure':
-          return '#76FFED';
-          break;
-      }
-    });
-
-  // Add a label to a node by adding a SVG text element inside a node group
-  node.append("svg:text").attr("class", "nodetext")
-    .attr("dx", 12)
-    .attr("dy", ".35em")
-    .text(function(d) { return d.label; });
-
-  force.on("tick", tick);
-
-  /* This function is called whenever a node is drag to a new position.
-    Return: Moves the node and other svg elements related to it to a new position.
-      It also calculates the new curvature for the link between nodes.
-  */
-  function tick() {
-    link.attr("d", function(d) {
-      var dx = d.target.x - d.source.x;
-      var dy = d.target.y - d.source.y;
-      var dr = Math.sqrt(dx * dx + dy * dy);
-
-      return "M" + d.source.x + "," + d.source.y
-        + "A" + dr + "," + dr
-        + " 0 0,1 " + d.target.x
-        + "," + d.target.y;
-    });
-
-    node.select('circle.circle')
-      .attr('transform', function(d) {
-        return "translate(" + d.x + "," + d.y + ")";
-      })
-
-    node.select("text.nodetext")
-      .attr("x", function(d) {
-        return d.x;
-      })
-      .attr("y", function(d) {
-        return d.y;
-      })
-  }
-} // end for function draw_graph_for_edit
-
-/*  arguments: unsorted graph dataset
-    return: Returns an array of graph dataset where each graph dataset element
-      corresponds to one floor.
-*/
-function get_graph_per_floor(graph, total_floors) {
-  var sorted_graph = [];
-
-  for (var i = 0; i < total_floors; i++) {
-    sorted_graph[i] = {};
-    sorted_graph[i].floor_number = i + 1;
-    sorted_graph[i].graph_data = {};
-    sorted_graph[i].graph_data.nodes = [];
-    sorted_graph[i].graph_data.links = [];
-  }
-
-  for (var i = 0; i < graph.nodes.length; i++) {
-    var node_floor_number = graph.nodes[i].floor_number - 1;
-    sorted_graph[node_floor_number].graph_data.nodes.push(graph.nodes[i]);
-  }
-
-  for (var i = 0; i < graph.links.length; i++) {
-    var link_floor_number = graph.links[i].floor_number - 1;
-    sorted_graph[link_floor_number].graph_data.links.push(graph.links[i]);
-  }
-
-  return sorted_graph;
+UI.prototype.init = function() {
+  this.setFloorImageDimensions();
+  this.setScrollToLink();
+  this.setNavbars();
 }
 
-function update_graph_for_display(sorted_graph) {
-  console.log('update_graph_for_display');
+UI.prototype.setFloorImageDimensions = function() {
+  // SVG stage and floorplan image properties
+  var graph_container = document.getElementsByClassName('graph-container');
+  var graph_container_style = window.getComputedStyle(graph_container[0]);
+  var floor_img = document.getElementsByClassName('floor-img');
+  var floor_img_style = window.getComputedStyle(floor_img[0]);
+  var img_border = parseFloat(floor_img_style.getPropertyValue('border-top-width'));
+  var container_width = parseFloat(graph_container_style.getPropertyValue('width'));
+  var container_height = parseFloat(graph_container_style.getPropertyValue('height'));
 
-  var floor_selector = "div#floor" + sorted_graph.floor_number + " .graph-container";
-  var graph = sorted_graph.graph_data;
+  this.svgWidth = container_width - img_border;
+  this.svgHeight = container_height - img_border;
 
-  var vis = d3.select(floor_selector);
-
-  // storage for modified array of links
-  var links = [];
-
-  function modify_links() {
-    // get the object references to source and target nodes
-    // of each link given the name of the node
-    graph.links.forEach(function(link) {
-      var source_node = graph.nodes.filter(function(node) {
-        return node.id === link.source;
-      })[0];
-      var target_node = graph.nodes.filter(function(node) {
-        return node.id === link.target;
-      })[0];
-
-      links.push({
-        source: source_node,
-        target: target_node,
-        traffic: link.traffic
-      });
-    });
+  for (var i = 0; i < floor_img.length; i++) {
+    floor_img[i].style.width = this.svgWidth.toString() + 'px';
+    floor_img[i].style.height = this.svgHeight.toString() + 'px';
   }
-
-  function update_links() {
-    // Create the links by adding SVG path elements inside the SVG stage.
-    var link = vis.select("g.links-group")
-      .selectAll("path.link")
-
-    /* remove previous links by passing an empty dataset and moving the previous
-      links to the exit sub-selection
-    */
-    link = link.data([]);
-    link.exit().remove();
-
-    /* Now, pass the new dataset for the links and create new svg path elements
-      for the links.
-    */
-    link = link.data(links);
-
-    // Enter sub-selection
-    link.enter()
-      .append("svg:path")
-      .attr("class", "link")
-
-    // The "d" attribute of the SVG path element specifies the type of path
-    // that links the two nodes. In this case, the type of path is an arc
-    link.attr("d", function(d) {
-        var d1 = {
-          x: d.source.x_coordinate,
-          y: d.source.y_coordinate
-        };
-
-        var d2 = {
-          x: d.target.x_coordinate,
-          y: d.target.y_coordinate
-        };
-
-        // get the x and y differentials
-        var dx = (d.target.x_coordinate - d.source.x_coordinate);
-        var dy = (d.target.y_coordinate - d.source.y_coordinate);
-
-        // compute for the distance between the two points
-        var dr = Math.sqrt(dx * dx + dy * dy);
-
-        // get the midpoint of the two points
-        var midx = (d.target.x_coordinate + d.source.x_coordinate) / 2.0;
-        var midy = (d.target.y_coordinate + d.source.y_coordinate) / 2.0;
-
-
-        var con_c = ((d1.x*d1.x) + (d1.y*d1.y) - (d2.x*d2.x) - (d2.y*d2.y)) / (2*(d2.y-d1.y));
-        var con_d = (d2.x-d1.x) / (d2.y-d1.y);
-
-        // 40% of midpoint distance
-        var link_radius = 0.4 * dr / 2;
-
-        var a = (1 + (con_d*con_d));
-        var b = (2*con_c*con_d - 2*midx + 2*con_d*midy);
-        var c = ((midx*midx) + (con_c*con_c) + (2*con_c*midy) + (midy*midy) - (link_radius*link_radius));
-
-        var discriminant = (b*b) - (4*a*c);
-
-        var px1 = (-b + Math.sqrt(discriminant)) / (2*a);
-        var px2 = (-b - Math.sqrt(discriminant)) / (2*a);
-
-        // difference between node point and px1 (px2)
-        var dpx1 = Math.abs(px1 - d1.x);
-        var dpx2 = Math.abs(px2 - d1.x);
-
-        // (px,py) is the coordinate of the control point
-        // for the quadratic bezier curve
-        var px = 0;
-
-        if (dpx1 > dpx2) {
-          px = px2;
-        } else {
-          px = px1;
-        }
-
-        var py = (-1)*con_c - (con_d*px);
-
-        // if the midpoint is near the top side of the svg stage
-        if ((midy - control_radius) < 0) {
-          py = 0;
-        }
-        // if the midpoint is near the bottom side of the svg stage
-        else if ((midy + control_radius) > h) {
-          py = h;
-        }
-
-        // if the midpoint is near the left side of the svg stage
-        if ((midx - control_radius) < 0) {
-            px = 0;
-        }
-        // if the midpoint is near the right side of the svg stage
-        else if ((midx + control_radius) > w) {
-          px = w;
-        }
-
-        // return a quadratic bezier curve
-        return "M " + d1.x + "," + d1.y
-          + " Q " + px + "," + py
-          + " " + d2.x + "," + d2.y;
-      });
-
-    // add css styles to links
-    link.attr('stroke', function(d) {
-        switch (d.traffic) {
-          case 'heavy':
-            return '#FF0000';
-            break;
-          case 'moderate':
-            return '#0000CD';
-            break;
-          case 'light':
-            return '#008000';
-            break;
-        }
-      })
-      .attr('stroke-opacity', link_stroke_opacity)
-      .attr('stroke-width', function(d) {
-        switch (d.traffic) {
-          case 'heavy':
-            return '6px';
-            break;
-          case 'moderate':
-            return '3px';
-            break;
-          case 'light':
-            return '1px';
-            break;
-        }
-      })
-      .attr('fill', 'none');
-  }
-
-  modify_links();
-  update_links();
 }
 
-/*
-  arguments: graph object containing the nodes and links
-  return: create SVG DOM elements for the nodes and links
-
-  This function is used when the graph is in view mode. Only those nodes
-  that have their coordinates set will be displayed in view mode.
-*/
-function draw_graph_for_display(sorted_graph) {
-  // add a SVG stage element inside div#graph-container with its
-  // width and height equal to the width and height of div#graph-container
-  var floor_selector = "div#floor" + sorted_graph.floor_number + " .graph-container";
-  var graph = sorted_graph.graph_data;
-
-  var vis = d3.select(floor_selector).append("svg")
-      .attr("width", w)
-      .attr("height", h);
-
-  // storage for modified array of links
-  var links = [];
-  var nodes = graph.nodes;
-
-  // groups for link and node svg elements
-  vis.append("g").attr("class", "links-group");
-  vis.append("g").attr("class", "nodes-group");
-
-  function modify_links() {
-    // get the object references to source and target nodes
-    // of each link given the name of the node
-    graph.links.forEach(function(link) {
-      var source_node = graph.nodes.filter(function(node) {
-        return node.id === link.source;
-      })[0];
-      var target_node = graph.nodes.filter(function(node) {
-        return node.id === link.target;
-      })[0];
-
-      links.push({
-        source: source_node,
-        target: target_node,
-        traffic: link.traffic
-      });
-    });
-  }
-
-  function update_links() {
-    // console.log(links);
-
-    // Create the links by adding SVG path elements inside the SVG stage.
-    var link = vis.select("g.links-group").selectAll("path.link")
-      .data(links);
-
-    // Enter sub-selection
-    link.enter()
-        .append("svg:path")
-        .attr("class", "link");
-
-    // The "d" attribute of the SVG path element specifies the type of path
-    // that links the two nodes. In this case, the type of path is an arc
-    link.attr("d", function(d) {
-        var d1 = {
-          x: d.source.x_coordinate,
-          y: d.source.y_coordinate
-        };
-
-        var d2 = {
-          x: d.target.x_coordinate,
-          y: d.target.y_coordinate
-        };
-
-        // get the x and y differentials
-        var dx = (d.target.x_coordinate - d.source.x_coordinate);
-        var dy = (d.target.y_coordinate - d.source.y_coordinate);
-
-        // compute for the distance between the two points
-        var dr = Math.sqrt(dx * dx + dy * dy);
-
-        // get the midpoint of the two points
-        var midx = (d.target.x_coordinate + d.source.x_coordinate) / 2.0;
-        var midy = (d.target.y_coordinate + d.source.y_coordinate) / 2.0;
-
-
-        var con_c = ((d1.x*d1.x) + (d1.y*d1.y) - (d2.x*d2.x) - (d2.y*d2.y)) / (2*(d2.y-d1.y));
-        var con_d = (d2.x-d1.x) / (d2.y-d1.y);
-
-        // 40% of midpoint distance
-        var link_radius = 0.4 * dr / 2;
-
-        var a = (1 + (con_d*con_d));
-        var b = (2*con_c*con_d - 2*midx + 2*con_d*midy);
-        var c = ((midx*midx) + (con_c*con_c) + (2*con_c*midy) + (midy*midy) - (link_radius*link_radius));
-
-        var discriminant = (b*b) - (4*a*c);
-
-        var px1 = (-b + Math.sqrt(discriminant)) / (2*a);
-        var px2 = (-b - Math.sqrt(discriminant)) / (2*a);
-
-        // difference between node point and px1 (px2)
-        var dpx1 = Math.abs(px1 - d1.x);
-        var dpx2 = Math.abs(px2 - d1.x);
-
-        // (px,py) is the coordinate of the control point
-        // for the quadratic bezier curve
-        var px = 0;
-
-        if (dpx1 > dpx2) {
-          px = px2;
-        } else {
-          px = px1;
-        }
-
-        var py = (-1)*con_c - (con_d*px);
-
-        // if the midpoint is near the top side of the svg stage
-        if ((midy - control_radius) < 0) {
-          py = 0;
-        }
-        // if the midpoint is near the bottom side of the svg stage
-        else if ((midy + control_radius) > h) {
-          py = h;
-        }
-
-        // if the midpoint is near the left side of the svg stage
-        if ((midx - control_radius) < 0) {
-            px = 0;
-        }
-        // if the midpoint is near the right side of the svg stage
-        else if ((midx + control_radius) > w) {
-          px = w;
-        }
-
-        // return a quadratic bezier curve
-        return "M " + d1.x + "," + d1.y
-          + " Q " + px + "," + py
-          + " " + d2.x + "," + d2.y;
-      });
-
-    // add css styles to links
-    link.attr('stroke', function(d) {
-        switch (d.traffic) {
-          case 'heavy':
-            return '#FF0000';
-            break;
-          case 'moderate':
-            return '#0000CD';
-            break;
-          case 'light':
-            return '#008000';
-            break;
-        }
-      })
-      .attr('stroke-opacity', link_stroke_opacity)
-      .attr('stroke-width', function(d) {
-        switch (d.traffic) {
-          case 'heavy':
-            return '6px';
-            break;
-          case 'moderate':
-            return '3px';
-            break;
-          case 'light':
-            return '1px';
-            break;
-        }
-      })
-      .attr('fill', 'none');
-  }
-
-
-  function handle_mouse_over(d, i) {
-
-  }
-
-  function handle_mouse_out(d, i) {
-
-  }
-
-  function update_nodes() {
-    // Create nodes by adding SVG g elements inside the SVG stage.
-    // The SVG g (group) element allows us to separate svg elements for each node.
-    var node = vis.select("g.nodes-group").selectAll("g.node")
-        .data(nodes);
-
-    // Enter sub-selection
-    node.enter()
-        .append("svg:g")
-        .attr("class", "node");
-
-    // add a svg:circle element inside a node group
-    node.append("svg:circle").attr("class", "circle")
-      .attr("cx", function(d) { return d.x_coordinate; })
-      .attr("cy", function(d) { return d.y_coordinate; })
-      .attr("r", nodeRadius)
-      .attr('stroke', 'black')
-      .attr('stroke-width', '2px')
-      .attr("fill", function(d) {
-        switch (d.sensor_type) {
-          case 'Temperature':
-            return '#FFF44D';
-            break;
-          case 'Humidity':
-            return '#E8850C';
-            break;
-          case 'Light Intensity':
-            return '#FF0093';
-            break;
-          case 'Pressure':
-            return '#76FFED';
-            break;
-        }
-      })
-      .on('mouseover', handle_mouse_over)
-      .on('mouseout', handle_mouse_out);
-
-    // add a svg:text element inside a node group
-    // and set the x and y attributes of the svg:text element
-    // similar to the node's svg:circle element's x and y attributes
-    node.append("svg:text").attr("class", "nodetext")
-      .attr("x", function(d) {
-        return d.x_coordinate;
-      })
-      .attr("y", function(d) {
-        return d.y_coordinate;
-      })
-      .attr("dx", 12)
-      .attr("dy", ".35em")
-      .text(function(d) { return d.label; });
-  }
-
-  /*
-    Arguments: node_data is an object containing the node's properties
-    Returns the html code to be placed in the tooltip area
-  */
-  function tooltip_contents(node_data) {
-    var html = ""
-      + "<div class='tooltip-row'>Mac Address: " + node_data.mac_address + "</div>"
-      + "<div class='tooltip-row'>Last Transmission: " + node_data.last_transmission + "</div>"
-      + "<div class='tooltip-row'>Packets Sent: " + node_data.packets_sent + "</div>"
-      + "<div class='tooltip-row'>Packets Received: " + node_data.packets_received + "</div>";
-    return html;
-  }
-
-  function create_tooltip() {
-    // Add tooltip functionality to each circle SVG DOM element
-    // having a class name 'circle'
-    $('circle.circle').qtip({
-      // "this" currently points to a single circle SVG DOM element
-      style: {
-        classes: 'custom-tooltip'  // add user-defined classes to the tooltip
-      },
-      content: {
-        // $(this).prop("__data__") returns an object
-        // containing the node's properties
-        title: function(event, api) {
-          return $(this).prop("__data__").label;
-        },
-        text: function(event, api) {
-          var contents = tooltip_contents($(this).prop("__data__"));
-          return contents;
-        }
-      }
-    });
-  }
-
-  modify_links();
-  update_links();
-  update_nodes();
-  create_tooltip();
-} // end function draw_graph_for_display
-
-function gui_init() {
-  set_navbars();
-  smooth_scroll();
-}
-
-function smooth_scroll() {
+UI.prototype.setScrollToLink = function() {
   $('.floor-link').on('click', function() {
     var link = '#floor' + this.dataset.floorNumber.toString();
     var top_offset = $('.main-nav').outerHeight(); // offset covered by navbar
@@ -893,7 +88,7 @@ function smooth_scroll() {
   });
 }
 
-function set_navbars() {
+UI.prototype.setNavbars = function() {
   var main_nav = $('.main-nav');
   var side_nav = $('.nav-side');
 
@@ -926,3 +121,670 @@ function set_navbars() {
     }
   });
 }
+
+/*******************  END UI Class  ******************/
+
+
+/****************  EventHandler Class  ***************/
+
+function EventHandler() {}
+
+EventHandler.prototype.editBtnClicked = function(floorNumber) {
+  // remove the edit button and replace it with a save
+  // button and cancel button
+  var edit_btns = $('.edit-btn').remove();
+  var floor_labels = $('.floor-label');
+
+  // remove all DOM elements inside the floor-group div
+  var floor_group = $('.floor-group')[0];
+  while (floor_group.firstChild) {
+    floor_group.removeChild(floor_group.firstChild);
+  }
+
+  // add the new floor label inside the floor group div
+  floor_group.innerHTML = this.newFloorLabel(floorNumber);
+
+  // add css properties to the floor image
+  var newFloorImg = $('.floor-img')[0];
+  newFloorImg.style.width = ui.svgWidth.toString() + 'px';
+  newFloorImg.style.height = ui.svgHeight.toString() + 'px';
+  newFloorImg.style.position = 'absolute';
+  newFloorImg.style.zIndex = '-1';
+
+  graph_data.getDataForEdit(floorNumber);
+}
+
+EventHandler.prototype.getUpdatedNodes = function() {
+  var nodes = graph_data.graphDrawer.nodes;
+  var modifiedNodes = [];
+
+  for (var i = 0; i < nodes.length; i++) {
+    if (nodes[i].fixed == true) {
+      modifiedNodes.push({
+        'id': nodes[i].id,
+        'x': nodes[i].x,
+        'y': nodes[i].y
+      });
+    }
+  }
+
+  return modifiedNodes;
+}
+
+EventHandler.prototype.updateNodes = function(updatedNodes) {
+  $.ajax({
+    url: BASEURL + '/nodes/update',
+    type: 'POST',
+    data: {nodes: JSON.stringify(updatedNodes)},
+    dataType: 'json',
+    success: function(response) {
+      location.reload();
+    }
+  });
+}
+
+EventHandler.prototype.cancelBtnClicked = function() {
+  location.reload();
+}
+
+EventHandler.prototype.saveBtnClicked = function() {
+  var updatedNodes = this.getUpdatedNodes();
+
+  // if there are modified nodes
+  if (updatedNodes.length !== 0) {
+    this.updateNodes(updatedNodes);
+  }
+}
+
+EventHandler.prototype.newFloorLabel = function(floorNumber) {
+  // create the new floor label div with corresponding floor number
+  var newFloorLabel = ''
+    + '<div class="floor" id="floor' + floorNumber.toString() + '">'
+      + '<div class="floor-label">'
+        + '<span>Floor ' + floorNumber.toString() + '</span>'
+        + '<button type="button" class="success button save-btn">Save Graph</button>'
+        + '<button type="button" class="success button cancel-btn">Cancel</button>'
+      + '</div> <!-- end .floor-label -->'
+      + '<div class="floor-graph">'
+        + '<div class="graph-container">'
+          + '<img src="/images/floorplan7.jpg" class="floor-img">'
+        + '</div> <!-- end .graph-container -->'
+      + '</div> <!-- end .floor-graph -->'
+    + '</div> <!-- end .floor#floor1 -->';
+
+    return newFloorLabel;
+}
+
+/**************  END EventHandler Class  *************/
+
+
+/****************  GraphPerFloor Class  **************/
+
+function GraphPerFloor(floorNumber, nodes, links) {
+  this.nodes = nodes;
+  this.links = links;
+  this.floorNumber = floorNumber;
+}
+
+/**************  END GraphPerFloor Class  ************/
+
+
+/******************  GraphData Class  ****************/
+
+function GraphData(floorCount) {
+  this.floorCount = floorCount;
+  this.graphData = null;
+  this.graphPerFloor = [];
+  this.graphDrawer = null;
+}
+
+/*  This function gets the graph data containing the nodes with their
+    coordinates set and the links in between nodes. After a successful AJAX call,
+    it calls the draw_graph_for_display function and it passes to the function
+    the graph data from the AJAX call.
+*/
+GraphData.prototype.getDataForDisplay = function() {
+  var graphDataObj = this;
+
+  // ajax call for guest users
+  $.ajax({
+    url: BASEURL + "/nodes_for_display",
+    type: "GET",
+    dataType: "json",
+    success: function(graphData) {
+      graphDataObj.getGraphPerFloor(graphData);
+      graph_drawer.drawGraphsForDisplay(graphDataObj.graphPerFloor);
+
+    },
+    error: function(req, status, err) {
+      console.log(status, err);
+    }
+  });
+}
+
+GraphData.prototype.getDataForEdit = function(floorNumber) {
+  var graphDataObj = this;
+
+  // ajax call to get graph data
+  $.ajax({
+    url: BASEURL + '/nodes/' + floorNumber.toString(),
+    type: 'GET',
+    dataType: 'json',
+    success: function(graph) {
+      var links = graphDataObj.modifyLinks(graph.nodes, graph.links);
+      var nodes = graphDataObj.modifyNodes(graph.nodes);
+
+      graphDataObj.graphDrawer = new SingleGraphDrawer(nodes, links, floorNumber);
+      graphDataObj.graphDrawer.drawGraphForEdit();
+    },
+    error: function(req, status, err) {
+      console.log(status, err);
+    }
+  });
+}
+
+/*  arguments: unsorted graph dataset
+    return: Returns an array of graph dataset where each graph dataset element
+      corresponds to one floor.
+*/
+GraphData.prototype.getGraphPerFloor = function(graphData) {
+  this.graphData = graphData;
+
+  for (var i = 0; i < this.floorCount; i++) {
+    var nodes = this.graphData.nodes.filter(function(node) {
+      return node.floor_number === (i + 1);
+    })
+
+    var links = this.graphData.links.filter(function(link) {
+      return link.floor_number === (i + 1);
+    });
+
+    links = this.modifyLinks(nodes, links);
+
+    this.graphPerFloor.push(new GraphPerFloor(i + 1, nodes, links));
+  }
+}
+
+GraphData.prototype.modifyLinks = function(nodes, links) {
+  var modifiedLinks = [];
+
+  for (var i = 0; i < links.length; i++) {
+    var sourceNode = null;
+    var targetNode = null;
+
+    for (var j = 0; j < nodes.length; j++) {
+      if (nodes[j].id === links[i].source) {
+        sourceNode = nodes[j];
+      } else if (nodes[j].id === links[i].target) {
+        targetNode = nodes[j];
+      }
+
+      if (sourceNode !== null && targetNode !== null) {
+        break;
+      }
+    }
+
+    modifiedLinks.push({
+      source: sourceNode,
+      target: targetNode,
+      traffic: links[i].traffic
+    });
+  }
+
+  return modifiedLinks;
+}
+
+GraphData.prototype.modifyNodes = function(nodes) {
+  var modifiedNodes = [];
+  nodes.forEach(function(node) {
+    if (node.x_coordinate !== null) {
+      node.x = node.x_coordinate;
+      node.y = node.y_coordinate;
+    }
+    modifiedNodes.push(node);
+  });
+
+  return modifiedNodes;
+}
+
+/****************  END GraphData Class  **************/
+
+
+/***************  MultiGraphDrawer Class  ************/
+
+function MultiGraphDrawer() {
+  this.graphsDisplayed = false;
+}
+
+/*
+  @param graphPerFloor = array
+*/
+MultiGraphDrawer.prototype.drawGraphsForDisplay = function(graphPerFloor) {
+  for (var i = 0; i < graphPerFloor.length; i++) {
+    if (this.graphsDisplayed) {
+      (new SingleGraphDrawer(graphPerFloor[i].nodes, graphPerFloor[i].links,
+        graphPerFloor[i].floorNumber)).updateGraphDisplay();
+    }
+    else {
+      (new SingleGraphDrawer(graphPerFloor[i].nodes, graphPerFloor[i].links,
+        graphPerFloor[i].floorNumber)).drawGraphDisplay();
+    }
+  }
+
+  if (this.graphsDisplayed === false) this.graphsDisplayed = true;
+}
+
+/*************  END MultiGraphDrawer Class  **********/
+
+
+/***************  SingleGraphDrawer Class  ***********/
+
+function SingleGraphDrawer(nodes, links, floorNumber) {
+  this.floorNumber = floorNumber;
+  this.nodes = nodes;
+  this.links = links;
+  this.svgStage = null;
+  this.width = ui.svgWidth;
+  this.height = ui.svgHeight;
+  this.linkSelection = null;
+  this.nodeSelection = null;
+  this.floorSelector = "div#floor" + floorNumber.toString() + " .graph-container";
+  this.force = null;
+  this.forEdit = false;
+}
+
+SingleGraphDrawer.prototype.drawGraphDisplay = function() {
+  // initial graph display
+  this.initSVGStage();
+  this.getLinkSelection();
+  this.getNodeSelection();
+  this.createSVGLinks();
+  this.createSVGNodes();
+}
+
+SingleGraphDrawer.prototype.updateGraphDisplay = function() {
+  // update graph display
+  this.getSVGStage();
+  this.removeOldSVGLinks();
+  this.updateSVGLinks();
+}
+
+SingleGraphDrawer.prototype.drawGraphForEdit = function() {
+  this.forEdit = true;
+  this.initSVGStage();
+  this.initForceLayout();
+  this.getNodeSelection();
+  this.createSVGNodesForEdit();
+  this.addNodeDragBehavior();
+}
+
+SingleGraphDrawer.prototype.createSVGNodesForEdit = function() {
+  this.nodeSelection.enter().append("g")
+    .attr("class", "node");
+
+  this.createNodeCircle();
+  this.createNodeLabel();
+}
+
+SingleGraphDrawer.prototype.getNodeDragBehavior = function() {
+  var force = this.force;
+  var tick = this.getTick();
+
+  var nodeDrag = d3.behavior.drag()
+    .on("dragstart", dragstart)
+    .on("drag", dragmove)
+    .on("dragend", dragend);
+
+  /* arguments: d = node object,
+        i = index of the node object from the node array defined in the graph object
+    return: This function stops the force-layout algorithm of d3js when
+      a node is being dragged so that the force-layout will not affect the
+      placing of the node to its new position.
+  */
+  function dragstart(d, i) {
+    force.stop(); // stops the force auto positioning before you start dragging
+  }
+
+  /* arguments: d = node object,
+        i = index of the node object from the node array defined in the graph object
+    return: This function saves the new coordinate of the node to px,py,x,y
+      properties of the node object. After that, the tick function is called
+      to make visual changes to the position of the node and other svg elements
+      related to it.
+  */
+  function dragmove(d, i) {
+    d.px += d3.event.dx;
+    d.py += d3.event.dy;
+    d.x += d3.event.dx;
+    d.y += d3.event.dy;
+    tick(); // this is the key to make it work together with updating both px,py,x,y on d !
+  }
+
+  /*  arguments: d = node object,
+        i = index of the node object from the node array defined in the graph object
+      return: After dragging a node, the node's "fixed" property will be set to true.
+        This will prevent the force-layout algorithm of d3js to make changes to
+        this node when other nodes are dragged.
+  */
+  function dragend(d, i) {
+    d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
+    tick();
+    force.resume();
+  }
+
+  return nodeDrag;
+}
+
+SingleGraphDrawer.prototype.getTick = function() {
+  var node = this.nodeSelection;
+
+  /* This function is called whenever a node is drag to a new position.
+    Return: Moves the node and other svg elements related to it to a new position.
+      It also calculates the new curvature for the link between nodes.
+  */
+  var tick = function() {
+    node.select('circle.circle')
+      .attr('transform', function(d) {
+        return "translate(" + d.x + "," + d.y + ")";
+      })
+
+    node.select("text.nodetext")
+      .attr("x", function(d) {
+        return d.x;
+      })
+      .attr("y", function(d) {
+        return d.y;
+      })
+  }
+
+  return tick;
+}
+
+SingleGraphDrawer.prototype.addNodeDragBehavior = function() {
+  this.nodeSelection.call(this.getNodeDragBehavior());
+  this.force.on("tick", this.getTick());
+}
+
+SingleGraphDrawer.prototype.initForceLayout = function() {
+  this.force = d3.layout.force()
+    .nodes(this.nodes)
+    .links(this.links)
+    .size([ui.svgWidth, ui.svgHeight])
+    .start();
+}
+
+SingleGraphDrawer.prototype.initSVGStage = function() {
+  this.svgStage = d3.select(this.floorSelector).append("svg")
+    .attr("width", this.width)
+    .attr("height", this.height);
+
+  // add svg group elements for the links and nodes
+  this.svgStage.append("g").attr("class", "links-group");
+  this.svgStage.append("g").attr("class", "nodes-group");
+}
+
+SingleGraphDrawer.prototype.getSVGStage = function() {
+  this.svgStage = d3.select(this.floorSelector);
+}
+
+SingleGraphDrawer.prototype.getLinkSelection = function() {
+  this.linkSelection = this.svgStage.select("g.links-group")
+    .selectAll("path.link")
+    .data(this.links);
+}
+
+SingleGraphDrawer.prototype.getNodeSelection = function() {
+  this.nodeSelection = this.svgStage.select("g.nodes-group")
+    .selectAll("g.node")
+    .data(this.nodes);
+}
+
+SingleGraphDrawer.prototype.createSVGLinks = function() {
+  // "Enter" sub-selection
+  this.linkSelection.enter()
+    .append("path")
+    .attr("class", "link");
+
+  this.computeLinkCurvature();
+  this.setStylesToLinks();
+}
+
+SingleGraphDrawer.prototype.removeOldSVGLinks = function() {
+  this.linkSelection = this.svgStage.select("g.links-group")
+    .selectAll("path.link").data([]);
+  this.linkSelection.exit().remove();
+}
+
+SingleGraphDrawer.prototype.updateSVGLinks = function() {
+  this.linkSelection = this.linkSelection.data(this.links);
+  this.createSVGLinks();
+}
+
+SingleGraphDrawer.prototype.computeLinkCurvature = function() {
+  // The "d" attribute of the SVG path element specifies the type of path
+  // that links the two nodes. In this case, the type of path is an arc
+  this.linkSelection.attr("d", function(d) {
+    var d1 = {
+      x: d.source.x_coordinate,
+      y: d.source.y_coordinate
+    };
+
+    var d2 = {
+      x: d.target.x_coordinate,
+      y: d.target.y_coordinate
+    };
+
+    // get the x and y differentials
+    var dx = (d.target.x_coordinate - d.source.x_coordinate);
+    var dy = (d.target.y_coordinate - d.source.y_coordinate);
+
+    // compute for the distance between the two points
+    var dr = Math.sqrt(dx * dx + dy * dy);
+
+    // get the midpoint of the two points
+    var midx = (d.target.x_coordinate + d.source.x_coordinate) / 2.0;
+    var midy = (d.target.y_coordinate + d.source.y_coordinate) / 2.0;
+
+
+    var conC = ((d1.x*d1.x) + (d1.y*d1.y) - (d2.x*d2.x) - (d2.y*d2.y)) / (2*(d2.y-d1.y));
+    var conD = (d2.x-d1.x) / (d2.y-d1.y);
+
+    // 40% of midpoint distance
+    var linkRadius = 0.4 * dr / 2;
+
+    var a = (1 + (conD*conD));
+    var b = (2*conC*conD - 2*midx + 2*conD*midy);
+    var c = ((midx*midx) + (conC*conC) + (2*conC*midy) + (midy*midy) - (linkRadius*linkRadius));
+
+    var discriminant = (b*b) - (4*a*c);
+
+    var px1 = (-b + Math.sqrt(discriminant)) / (2*a);
+    var px2 = (-b - Math.sqrt(discriminant)) / (2*a);
+
+    // difference between node point and px1 (px2)
+    var dpx1 = Math.abs(px1 - d1.x);
+    var dpx2 = Math.abs(px2 - d1.x);
+
+    // (px,py) is the coordinate of the control point
+    // for the quadratic bezier curve
+    var px = 0;
+
+    if (dpx1 > dpx2) {
+      px = px2;
+    } else {
+      px = px1;
+    }
+
+    var py = (-1)*conC - (conD*px);
+
+    // if the midpoint is near the top side of the svg stage
+    if ((midy - linkRadius) < 0) {
+      py = 0;
+    }
+    // if the midpoint is near the bottom side of the svg stage
+    else if ((midy + linkRadius) > ui.svgHeight) {
+      py = ui.svgHeight;
+    }
+
+    // if the midpoint is near the left side of the svg stage
+    if ((midx - linkRadius) < 0) {
+        px = 0;
+    }
+    // if the midpoint is near the right side of the svg stage
+    else if ((midx + linkRadius) > ui.svgWidth) {
+      px = ui.svgWidth;
+    }
+
+    // return a quadratic bezier curve
+    return "M " + d1.x + "," + d1.y
+      + " Q " + px + "," + py
+      + " " + d2.x + "," + d2.y;
+  });
+}
+
+SingleGraphDrawer.prototype.setStylesToLinks = function() {
+  this.setLinkStroke();
+  this.setLinkStrokeWidth();
+  this.linkSelection.attr('stroke-opacity', LINKSTROKEOPACITY);
+  this.linkSelection.attr('fill', 'none');
+}
+
+SingleGraphDrawer.prototype.setLinkStroke = function() {
+  this.linkSelection.attr('stroke', function(d) {
+      switch (d.traffic) {
+        case 'heavy':
+          return '#FF0000';
+          break;
+        case 'moderate':
+          return '#0000CD';
+          break;
+        case 'light':
+          return '#008000';
+          break;
+      }
+    });
+}
+
+SingleGraphDrawer.prototype.setLinkStrokeWidth = function()  {
+  this.linkSelection.attr('stroke-width', function(d) {
+    switch (d.traffic) {
+      case 'heavy':
+        return '6px';
+        break;
+      case 'moderate':
+        return '3px';
+        break;
+      case 'light':
+        return '1px';
+        break;
+    }
+  });
+}
+
+SingleGraphDrawer.prototype.createSVGNodes = function() {
+  this.nodeSelection.enter()
+    .append("g")
+    .attr("class", "node");
+
+  this.createNodeCircle();
+  this.createNodeLabel();
+  this.createTooltip();
+}
+
+// add a svg:circle element inside a node group
+SingleGraphDrawer.prototype.createNodeCircle = function() {
+  var graphForEdit = this.forEdit;
+  var nodeCircle = this.nodeSelection.append("circle")
+    .attr("class", "circle")
+    .attr("cx", function(d) {
+      if (graphForEdit) {
+        return "0px";
+      } else {
+        return d.x_coordinate;
+      }
+    })
+    .attr("cy", function(d) {
+      if (graphForEdit) {
+        return "0px";
+      } else {
+        return d.y_coordinate;
+      }
+    })
+    .attr("r", NODERADIUS);
+
+  this.setStylesToCircle(nodeCircle);
+}
+
+SingleGraphDrawer.prototype.setStylesToCircle = function(nodeCircle) {
+  nodeCircle.attr("stroke", "black")
+    .attr("stroke-width", "2px");
+
+  this.setNodeColor(nodeCircle);
+}
+
+SingleGraphDrawer.prototype.setNodeColor = function(nodeCircle) {
+  nodeCircle.attr("fill", function(d) {
+    switch (d.sensor_type) {
+      case 'Temperature':
+        return '#FFF44D';
+        break;
+      case 'Humidity':
+        return '#E8850C';
+        break;
+      case 'Light Intensity':
+        return '#FF0093';
+        break;
+      case 'Pressure':
+        return '#76FFED';
+        break;
+    }
+  });
+}
+
+// add a svg:text element inside a node group
+// and set the x and y attributes of the svg:text element
+// similar to the node's svg:circle element's x and y attributes
+SingleGraphDrawer.prototype.createNodeLabel = function() {
+  this.nodeSelection.append("text")
+    .attr("class", "nodetext")
+    .attr("x", function(d) { return d.x_coordinate; })
+    .attr("y", function(d) { return d.y_coordinate; })
+    .attr("dx", 12)
+    .attr("dy", ".35em")
+    .text(function(d) { return d.label; });
+}
+
+SingleGraphDrawer.prototype.createTooltip = function() {
+  var singleGraphDrawerObj = this;
+
+  // Add tooltip functionality to each circle SVG DOM element
+  // having a class name 'circle'
+  $('circle.circle').qtip({
+    // "this" currently points to a single circle SVG DOM element
+    style: {
+      classes: 'custom-tooltip'  // add user-defined classes to the tooltip
+    },
+    content: {
+      // $(this).prop("__data__") returns an object
+      // containing the node's properties
+      title: function(event, api) {
+        return $(this).prop("__data__").label;
+      },
+      text: function(event, api) {
+        var contents = singleGraphDrawerObj.tooltipContents($(this).prop("__data__"));
+        return contents;
+      }
+    }
+  });
+}
+
+SingleGraphDrawer.prototype.tooltipContents = function(node_data) {
+  var html = ""
+    + "<div class='tooltip-row'>Mac Address: " + node_data.mac_address + "</div>"
+    + "<div class='tooltip-row'>Last Transmission: " + node_data.last_transmission + "</div>"
+    + "<div class='tooltip-row'>Packets Sent: " + node_data.packets_sent + "</div>"
+    + "<div class='tooltip-row'>Packets Received: " + node_data.packets_received + "</div>";
+  return html;
+}
+
+/*************  END SingleGraphDrawer Class  *********/

@@ -60,7 +60,7 @@ router.get('/nodes/:floor_number', function(req, res, next) {
         .then(function(edges) {
             var graph = {
               'nodes': nodes,
-              'edges': edges
+              'links': edges
             };
             res.json(graph);
         });
@@ -79,12 +79,10 @@ router.post('/nodes/update', function(req, res, next) {
       + ' WHERE node_id = \''
       + updatedNode.id +'\';';
 
-    models.sequelize.query(query).spread(function(results, metadata) {
-        // console.log(metadata);
-    }).then(function() {
-      res.json({'success': true});
-    });
+    models.sequelize.query(query).spread(function(results, metadata) {});
   });
+
+  res.send({});
 });
 
 module.exports = router;
