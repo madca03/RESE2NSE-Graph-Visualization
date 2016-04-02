@@ -7,7 +7,7 @@
     <title>Graph Visualization</title>
     <link rel="stylesheet" href="/stylesheets/jquery.qtip.min.css" />
     <link rel="stylesheet" href="/stylesheets/foundation.css" />
-    <link rel="stylesheet" href="/stylesheets/graphd3.css" />
+    <link rel="stylesheet" href="/stylesheets/node.css" />
   </head>
 
   <body>
@@ -33,10 +33,40 @@
       </div> <!-- end .nav-links -->
     </nav> <!-- end nav -->
 
-  
+    <div class="main">
+      <div class="row">
+        <div class="node-label">
+          <span><%= node.label.substring(0,4) + " " + node.label.substring(4) %></span>
+        </div> <!-- end .node-label -->
+
+        <div class="node-info">
+          <table>
+            <% for (var key in node) { %>
+              <tr>
+                <td class="info-label"><%= key.charAt(0).toUpperCase() + key.slice(1) %></td>
+
+                <% if (key === "coordinate_set") { %>
+                  <% if (node[key] === 1) { %>
+                    <td>True</td>
+                  <% } else { %>
+                    <td>False</td>
+                  <% } %>
+                <% } else { %>
+                  <td><%= node[key] %></td>
+                <% } %>
+
+              </tr>
+            <% } %>
+          </table>
+        </div> <!-- end .node-info -->
+      </div> <!-- end .row -->
+    </div> <!-- end .main -->
   </body>
 
   <script></script>
   <script src="/javascripts/jquery-2.2.0.min.js"></script>
   <script src="/javascripts/foundation.min.js"></script>
+  <script src="/javascripts/d3.v3.min.js"></script>
+  <script src="/javascripts/jquery.qtip.min.js"></script>
+  <script src="/javascripts/node.js"></script>
 </html>

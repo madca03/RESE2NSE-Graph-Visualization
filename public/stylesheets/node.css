@@ -1,0 +1,113 @@
+body {
+  padding: 0;
+  margin: 0;
+}
+
+/* heading */
+.nav-top {
+  background-color: #08E067;
+  color: white;
+  text-align: center;
+  padding: 21px 0px;
+  margin-bottom: 1px;
+}
+
+.nav-top .sub-heading {
+  font-size: 18px;
+}
+
+.nav-top .heading {
+  font-size: 42px;
+  display: block;
+}
+
+
+/*** top navbar ***/
+.main-nav {
+  position: relative;
+  z-index: 150;
+}
+
+.main-nav-scrolled {
+  position: fixed;
+  top: 0px;
+  width: 100%;
+}
+
+.nav-links {
+  background-color: #1DC459;
+  margin-bottom: 1px;
+  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.4);
+}
+
+.nav-links .row {
+  border-left: 1px solid #07BA55;
+}
+
+.nav-links ul {
+  list-style-type: none; /* remove the bullets of the list entries */
+  /* remove browser default settings */
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links ul li {
+  float: left;
+}
+
+.nav-links ul li a {
+  display: inline-block;
+  color: white;
+  text-align: center;
+  padding: 14px 27px;
+  text-decoration: none;
+  font-size: 16px;
+  border-right: 1px solid #07BA55;
+  transition: background-color 0.1s ease-out;
+}
+
+.nav-links ul li a:hover {
+  background-color: #377F51;
+  transition: background-color 0.1s ease-out;
+}
+
+/* main body */
+.main {
+  padding: 54px 50px 0px;
+}
+
+/* node label */
+.node-label {
+  padding-bottom: 25px;
+}
+
+.node-label span {
+  background-color: #047033;
+  color: #FFF;
+  padding: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 18px;
+  text-decoration: none;
+  pointer-events: none;
+  margin-right: 10px;
+}
+
+/* information label on the table */
+.info-label {
+  width: 125px;
+  border-right: 3px solid rgb(255, 255, 255);
+}
+
+/* table design */
+.node-info table tr:nth-child(2n) {
+  background-color: rgb(218, 252, 214);
+}
+
+.node-info table tr:nth-child(2n-1) {
+  background-color: rgb(244, 255, 242);
+}
+
+.node-info table tr {
+  border-bottom: solid 3px white;
+}

@@ -85,4 +85,15 @@ router.post('/nodes/update', function(req, res, next) {
   res.send({});
 });
 
+router.get('/node/:node_id', function(req, res, next) {
+  var nodeID = req.params.node_id;
+  var nodeQuery = "SELECT * FROM Nodes WHERE node_id=" + "'" + nodeID + "'" + ";";
+
+  models.sequelize.query(nodeQuery, { type: models.sequelize.QueryTypes.SELECT })
+    .then(function(nodes) {
+      var node = nodes[0];
+      res.render('node', {node: node});
+    });
+});
+
 module.exports = router;

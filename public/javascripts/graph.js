@@ -7,7 +7,7 @@ const NODEFILL = "black";
 // link visual properties
 const LINKSTROKEOPACITY = '1';
 const LINKSTROKEWIDTH = '2px';
-const UPDATERATE = 1000;
+const UPDATERATE = 100000;
 
 /*************  Application starts here  *************/
 
@@ -393,9 +393,26 @@ function SingleGraphDrawer(nodes, links, floorNumber) {
   this.forEdit = false;
 }
 
+SingleGraphDrawer.prototype.createArrowHead = function() {
+  // build the arrow.
+  this.svgStage.append("defs")
+    .append("marker")
+      .attr("id", "end")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 13)
+      .attr("refY", 0)
+      .attr("markerWidth", 12)
+      .attr("markerHeight", 12)
+      .attr("orient", "auto")
+      .attr("markerUnits", "userSpaceOnUse")
+    .append("path")
+      .attr("d", "M0,-5L10,0L0,5");
+}
+
 SingleGraphDrawer.prototype.drawGraphDisplay = function() {
   // initial graph display
   this.initSVGStage();
+  this.createArrowHead();
   this.getLinkSelection();
   this.getNodeSelection();
   this.createSVGLinks();
@@ -540,10 +557,13 @@ SingleGraphDrawer.prototype.getNodeSelection = function() {
 }
 
 SingleGraphDrawer.prototype.createSVGLinks = function() {
+  this.createArrowHead();
+
   // "Enter" sub-selection
   this.linkSelection.enter()
     .append("path")
-    .attr("class", "link");
+    .attr("class", "link")
+    .attr("marker-end", "url(#end)"); // add the marker
 
   this.computeLinkCurvature();
   this.setStylesToLinks();
@@ -601,7 +621,7 @@ SingleGraphDrawer.prototype.computeLinkCurvature = function() {
     var px1 = (-b + Math.sqrt(discriminant)) / (2*a);
     var px2 = (-b - Math.sqrt(discriminant)) / (2*a);
 
-    // difference between node point and px1 (px2)
+    // difference between node point (source node) and px1 (px2)
     var dpx1 = Math.abs(px1 - d1.x);
     var dpx2 = Math.abs(px2 - d1.x);
 
@@ -610,8 +630,10 @@ SingleGraphDrawer.prototype.computeLinkCurvature = function() {
     var px = 0;
 
     if (dpx1 > dpx2) {
+      // link is concave left or concave down
       px = px2;
     } else {
+      // link is concave right or concave up
       px = px1;
     }
 
@@ -627,7 +649,7 @@ SingleGraphDrawer.prototype.computeLinkCurvature = function() {
     }
 
     // if the midpoint is near the left side of the svg stage
-    if ((midx - linkRadius) < 0) {
+    if ((midx - linkRadius) < 0)  {
         px = 0;
     }
     // if the midpoint is near the right side of the svg stage
@@ -713,13 +735,25 @@ SingleGraphDrawer.prototype.createNodeCircle = function() {
     .attr("r", NODERADIUS);
 
   this.setStylesToCircle(nodeCircle);
+  this.setNodeColor(nodeCircle);
+
+  if (!this.forEdit) {
+    this.addClickEventToCircle(nodeCircle);
+  }
+}
+
+SingleGraphDrawer.prototype.addClickEventToCircle = function(nodeCircle) {
+  nodeCircle.on("click", function() {
+    var nodeID = this.__data__.id;
+
+    window.open(BASEURL + "/node/" + nodeID, "_blank");
+  });
+  nodeCircle.attr("cursor", "pointer");
 }
 
 SingleGraphDrawer.prototype.setStylesToCircle = function(nodeCircle) {
   nodeCircle.attr("stroke", "black")
     .attr("stroke-width", "2px");
-
-  this.setNodeColor(nodeCircle);
 }
 
 SingleGraphDrawer.prototype.setNodeColor = function(nodeCircle) {
