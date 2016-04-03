@@ -1,8 +1,3 @@
-div#graph-container, div#graph-legend {
-  /*padding: 10px;*/
-  height: 400px;
-}
-
 div#graph-container > svg {
   border: 1px solid black;
 }
@@ -230,6 +225,7 @@ body {
 }
 
 .graph-container {
+  width: 100%;
   height: 400px;
 }
 
@@ -259,7 +255,8 @@ svg {
   position: absolute;
 }
 
-/*svg:hover {*/
-  /*box-shadow: 0 0 5px 3px rgba(127, 208, 225, 0.3);*/
-  /*transition: box-shadow 0.15s ease-out;*/
-/*}*/
+@media screen and (max-width: 947px) {
+  .nav-side .floor-links ul li .heading {
+    font-size: 0.8rem;
+  }
+}

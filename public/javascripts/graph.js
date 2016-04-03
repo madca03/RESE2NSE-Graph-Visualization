@@ -7,13 +7,12 @@ const NODEFILL = "black";
 // link visual properties
 const LINKSTROKEOPACITY = '1';
 const LINKSTROKEWIDTH = '2px';
-const UPDATERATE = 100000;
+const UPDATERATE = 1000;
 
 /*************  Application starts here  *************/
 
 var event_handler = new EventHandler();
 var graph_data = new GraphData($('.floor').length);
-var graph_drawer = new MultiGraphDrawer();
 var ui = new UI();
 
 $(function() {
@@ -24,6 +23,18 @@ $(function() {
   var display_timer = setInterval(function() {
     graph_data.getDataForDisplay();
   }, UPDATERATE);
+
+  // function is called when the browser is resized
+  window.onresize = function() {
+    ui.updateUIOnBrowserResize();
+    graph_data.getDataForDisplay();
+
+    clearInterval(display_timer);
+
+    display_timer = setInterval(function() {
+      graph_data.getDataForDisplay();
+    }, UPDATERATE);
+  }
 
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
@@ -50,12 +61,19 @@ $(function() {
 function UI() {
   this.svgWidth = null;
   this.svgHeight = null;
+  this.baseSVGWidth = 866;
+  this.baseSVGHeight = 396;
 }
 
 UI.prototype.init = function() {
   this.setFloorImageDimensions();
   this.setScrollToLink();
   this.setNavbars();
+}
+
+UI.prototype.updateUIOnBrowserResize = function() {
+  this.setFloorImageDimensions();
+  this.updateSideNav();
 }
 
 UI.prototype.setFloorImageDimensions = function() {
@@ -86,6 +104,13 @@ UI.prototype.setScrollToLink = function() {
       scrollTop: $(link).offset().top - top_offset
     }, 750);
   });
+}
+
+UI.prototype.updateSideNav = function() {
+  var sideNav = $('.nav-side');
+  var parentDivWidth = sideNav.parent().width();
+
+  sideNav.width(parentDivWidth);
 }
 
 UI.prototype.setNavbars = function() {
@@ -235,7 +260,7 @@ function GraphData(floorCount) {
   this.floorCount = floorCount;
   this.graphData = null;
   this.graphPerFloor = [];
-  this.graphDrawer = null;
+  this.graphDrawer = new MultiGraphDrawer();
 }
 
 /*  This function gets the graph data containing the nodes with their
@@ -253,8 +278,8 @@ GraphData.prototype.getDataForDisplay = function() {
     dataType: "json",
     success: function(graphData) {
       graphDataObj.getGraphPerFloor(graphData);
-      graph_drawer.drawGraphsForDisplay(graphDataObj.graphPerFloor);
-
+      graphDataObj.graphDrawer.drawGraphsForDisplay(graphDataObj.graphPerFloor);
+      graphDataObj.graphPerFloor = [];  // set to empty array for next update
     },
     error: function(req, status, err) {
       console.log(status, err);
@@ -291,20 +316,53 @@ GraphData.prototype.getGraphPerFloor = function(graphData) {
   this.graphData = graphData;
 
   for (var i = 0; i < this.floorCount; i++) {
+    // get the nodes for the current floor
     var nodes = this.graphData.nodes.filter(function(node) {
       return node.floor_number === (i + 1);
     })
 
+    // get the links for the current floor
     var links = this.graphData.links.filter(function(link) {
       return link.floor_number === (i + 1);
     });
 
+    // modify links and nodes
+    this.modifyNodesForDisplay(nodes);
     links = this.modifyLinks(nodes, links);
 
+    // create a new "GraphPerFloor" object containing the nodes and links
+    // for the graph on that floor.
     this.graphPerFloor.push(new GraphPerFloor(i + 1, nodes, links));
   }
 }
 
+/**
+  * This function adds "scaledX" and "scaledY" attributes to each node object.
+  * These new attributes will be used in determining the node's visual position
+  * given a certain browser width and height. Using these attributes, we can
+  * also have a graph visualization that can respond to resizing of the browser
+  * window by calculating the new node position for each browser resize.
+  *
+  * @param {array} nodes - array of node objects on a given floor
+  * @return {array} nodes - array of modified node objects
+  */
+GraphData.prototype.modifyNodesForDisplay = function(nodes) {
+  for (var i = 0; i < nodes.length; i++) {
+    nodes[i].scaledX = (ui.svgWidth * nodes[i].x_coordinate) / ui.baseSVGWidth;
+    nodes[i].scaledY = (ui.svgHeight * nodes[i].y_coordinate) / ui.baseSVGHeight;
+  }
+}
+
+/**
+  * The link objects' source and target attributes are currently set to the
+  * "node_id" of the source and target nodes. Using these node_ids, the source
+  * and target attributes of each link object will be change to point to the
+  * corresponding node objects from the @param {array} nodes.
+  *
+  * @param {array} nodes - array of node objects on a given floor
+  * @param {array} links - array of link objects on a given floor.
+  * @return {array} modifiedLinks
+  */
 GraphData.prototype.modifyLinks = function(nodes, links) {
   var modifiedLinks = [];
 
@@ -362,6 +420,7 @@ function MultiGraphDrawer() {
 MultiGraphDrawer.prototype.drawGraphsForDisplay = function(graphPerFloor) {
   for (var i = 0; i < graphPerFloor.length; i++) {
     if (this.graphsDisplayed) {
+      // console.log("drawGraphsForDisplay");
       (new SingleGraphDrawer(graphPerFloor[i].nodes, graphPerFloor[i].links,
         graphPerFloor[i].floorNumber)).updateGraphDisplay();
     }
@@ -391,22 +450,27 @@ function SingleGraphDrawer(nodes, links, floorNumber) {
   this.floorSelector = "div#floor" + floorNumber.toString() + " .graph-container";
   this.force = null;
   this.forEdit = false;
+  this.baseGraphContainerWidth = 866;
+  this.baseGraphContainerHeight = 396;
+  this.forUpdate = false;
 }
 
 SingleGraphDrawer.prototype.createArrowHead = function() {
   // build the arrow.
-  this.svgStage.append("defs")
-    .append("marker")
-      .attr("id", "end")
-      .attr("viewBox", "0 -5 10 10")
-      .attr("refX", 13)
-      .attr("refY", 0)
-      .attr("markerWidth", 12)
-      .attr("markerHeight", 12)
-      .attr("orient", "auto")
-      .attr("markerUnits", "userSpaceOnUse")
-    .append("path")
-      .attr("d", "M0,-5L10,0L0,5");
+  if (this.svgStage.select("defs")[0][0] === null) {
+    this.svgStage.append("defs")
+      .append("marker")
+        .attr("id", "end")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 13)
+        .attr("refY", 0)
+        .attr("markerWidth", 12)
+        .attr("markerHeight", 12)
+        .attr("orient", "auto")
+        .attr("markerUnits", "userSpaceOnUse")
+      .append("path")
+        .attr("d", "M0,-5L10,0L0,5");
+  }
 }
 
 SingleGraphDrawer.prototype.drawGraphDisplay = function() {
@@ -420,10 +484,44 @@ SingleGraphDrawer.prototype.drawGraphDisplay = function() {
 }
 
 SingleGraphDrawer.prototype.updateGraphDisplay = function() {
+  // console.log("updateGraphDisplay function");
+  this.forUpdate = true;
   // update graph display
   this.getSVGStage();
+  this.getNodeSelection();
   this.removeOldSVGLinks();
-  this.updateSVGLinks();
+  this.scaleNodePosition();
+  this.updateSVGLinkSelection();
+  this.createSVGLinks();
+}
+
+SingleGraphDrawer.prototype.scaleNodePosition = function() {
+  var currentSVGWidth = this.width;
+  var currentSVGHeight = this.height;
+  var baseGraphContainerWidth = this.baseGraphContainerWidth;
+  var baseGraphContainerHeight = this.baseGraphContainerHeight;
+
+  // change cx and cy attribute of the circle for the window resize event
+  this.nodeSelection.selectAll('circle')
+    .attr('cx', function(d) {
+      var scaledX = (currentSVGWidth * d.x_coordinate) / baseGraphContainerWidth;
+      return scaledX;
+    })
+    .attr('cy', function(d) {
+      var scaledY = (currentSVGHeight * d.y_coordinate) / baseGraphContainerHeight;
+      return scaledY;
+    });
+
+  // change the x and y attribute of the node label (svg text) for the window resize event
+  this.nodeSelection.selectAll('text')
+    .attr("x", function(d) {
+      var scaledX = (currentSVGWidth * d.x_coordinate) / baseGraphContainerWidth;
+      return scaledX;
+    })
+    .attr("y", function(d) {
+      var scaledY = (currentSVGHeight * d.y_coordinate) / baseGraphContainerHeight;
+      return scaledY;
+    });
 }
 
 SingleGraphDrawer.prototype.drawGraphForEdit = function() {
@@ -541,7 +639,9 @@ SingleGraphDrawer.prototype.initSVGStage = function() {
 }
 
 SingleGraphDrawer.prototype.getSVGStage = function() {
-  this.svgStage = d3.select(this.floorSelector);
+  this.svgStage = d3.select(this.floorSelector).select('svg');
+  this.svgStage.attr("width", this.width);
+  this.svgStage.attr("height", this.height);
 }
 
 SingleGraphDrawer.prototype.getLinkSelection = function() {
@@ -575,36 +675,36 @@ SingleGraphDrawer.prototype.removeOldSVGLinks = function() {
   this.linkSelection.exit().remove();
 }
 
-SingleGraphDrawer.prototype.updateSVGLinks = function() {
+SingleGraphDrawer.prototype.updateSVGLinkSelection = function() {
   this.linkSelection = this.linkSelection.data(this.links);
-  this.createSVGLinks();
 }
 
 SingleGraphDrawer.prototype.computeLinkCurvature = function() {
+  var forUpdateDisplay = this.forUpdate;
+
   // The "d" attribute of the SVG path element specifies the type of path
   // that links the two nodes. In this case, the type of path is an arc
   this.linkSelection.attr("d", function(d) {
     var d1 = {
-      x: d.source.x_coordinate,
-      y: d.source.y_coordinate
+      x: d.source.scaledX,
+      y: d.source.scaledY
     };
 
     var d2 = {
-      x: d.target.x_coordinate,
-      y: d.target.y_coordinate
+      x: d.target.scaledX,
+      y: d.target.scaledY
     };
 
     // get the x and y differentials
-    var dx = (d.target.x_coordinate - d.source.x_coordinate);
-    var dy = (d.target.y_coordinate - d.source.y_coordinate);
+    var dx = (d2.x - d1.x);
+    var dy = (d2.y - d1.y);
 
     // compute for the distance between the two points
     var dr = Math.sqrt(dx * dx + dy * dy);
 
     // get the midpoint of the two points
-    var midx = (d.target.x_coordinate + d.source.x_coordinate) / 2.0;
-    var midy = (d.target.y_coordinate + d.source.y_coordinate) / 2.0;
-
+    var midx = (d2.x + d1.x) / 2.0;
+    var midy = (d2.y + d1.y) / 2.0;
 
     var conC = ((d1.x*d1.x) + (d1.y*d1.y) - (d2.x*d2.x) - (d2.y*d2.y)) / (2*(d2.y-d1.y));
     var conD = (d2.x-d1.x) / (d2.y-d1.y);
@@ -722,14 +822,14 @@ SingleGraphDrawer.prototype.createNodeCircle = function() {
       if (graphForEdit) {
         return "0px";
       } else {
-        return d.x_coordinate;
+        return d.scaledX;
       }
     })
     .attr("cy", function(d) {
       if (graphForEdit) {
         return "0px";
       } else {
-        return d.y_coordinate;
+        return d.scaledY;
       }
     })
     .attr("r", NODERADIUS);
@@ -781,8 +881,8 @@ SingleGraphDrawer.prototype.setNodeColor = function(nodeCircle) {
 SingleGraphDrawer.prototype.createNodeLabel = function() {
   this.nodeSelection.append("text")
     .attr("class", "nodetext")
-    .attr("x", function(d) { return d.x_coordinate; })
-    .attr("y", function(d) { return d.y_coordinate; })
+    .attr("x", function(d) { return d.scaledX; })
+    .attr("y", function(d) { return d.scaledY; })
     .attr("dx", 12)
     .attr("dy", ".35em")
     .text(function(d) { return d.label; });
