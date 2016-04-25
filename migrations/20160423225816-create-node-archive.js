@@ -1,29 +1,24 @@
 'use strict';
 module.exports = {
   up: function(queryInterface, Sequelize) {
-    queryInterface.createTable('Nodes', {
+    return queryInterface.createTable('Node_archives', {
       node_id: {
         allowNull: false,
-        primaryKey: true,
         type: Sequelize.STRING
       },
       label: {
         type: Sequelize.STRING
-        // allowNull: false
       },
       x: {
         type: Sequelize.DOUBLE,
-        // allowNull: false,
         defaultValue: null
       },
       y: {
         type: Sequelize.DOUBLE,
-        // allowNull: false,
         defaultValue: null
       },
       coordinate_set: {
         type: Sequelize.BOOLEAN,
-        // allowNull: false,
         defaultValue: false
       },
       sensor_type: {
@@ -53,10 +48,8 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
-    
-    return queryInterface.addIndex('Nodes', ['coordinate_set']);
   },
   down: function(queryInterface, Sequelize) {
-    return queryInterface.dropTable('Nodes');
+    return queryInterface.dropTable('Node_archives');
   }
 };

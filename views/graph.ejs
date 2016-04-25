@@ -7,7 +7,9 @@
     <title>Graph Visualization</title>
     <link rel="stylesheet" href="/stylesheets/jquery.qtip.min.css" />
     <link rel="stylesheet" href="/stylesheets/foundation.css" />
-    <link rel="stylesheet" href="/stylesheets/graphd3.css" />
+    <link rel="stylesheet" href="/stylesheets/jquery-ui.min.css" />
+    <link rel="stylesheet" href="/stylesheets/graph.css" />
+
   </head>
 
   <body>
@@ -40,11 +42,14 @@
           <div class="nav-side">
             <div class="floor-links">
               <ul>
-                <li><span class="heading">EEE FLOOR PLAN</span><li>
-                <li><span class="floor-link" data-floor-number=1>Floor 1</span></li>
-                <li><span class="floor-link" data-floor-number=2>Floor 2</span></li>
-                <li><span class="floor-link" data-floor-number=3>Floor 3</span></li>
-                <li><span class="floor-link" data-floor-number=4>Floor 4</span></li>
+                <li><span class="nav-side-heading">EEE FLOOR PLAN</span><li>
+
+                <% for (var i = 0; i < floorCount; i++) { %>
+                  <% var floorNumber = i + 1 %>
+
+                  <li><span class="floor-link" data-floor-number=1>Floor <%= floorNumber %></span></li>
+                <% } %>
+
               </ul>
             </div> <!-- end .floor-links -->
           </div> <!-- end .nav-side -->
@@ -53,53 +58,29 @@
         <div class="small-9 columns">
           <div class="floor-group">
 
-            <div class="floor" id="floor1">
-              <div class="floor-label">
-                <span>Floor 1</span>
-                <button type="button" class="success button edit-btn" data-floor-number=1>Edit Graph</button>
-              </div> <!-- end .floor-label -->
-              <div class="floor-graph">
-                <div class='graph-container'>
-                  <img src='/images/floorplan7.jpg' class="floor-img" id='floor1-img'>
-                </div> <!-- end .graph-container -->
-              </div> <!-- end .floor-graph -->
-            </div> <!-- end .floor#floor1 -->
+            <% for (var i = 0; i < floorCount; i++) { %>
+              <% var floorID = "floor" + (i + 1) %>
+              <% var floorNumber = i + 1 %>
+              <% var imageID = "floor" + (i + 1) + "-img" %>
+              <% var sliderID = "slider-range-" + (i + 1) %>
 
-            <div class="floor" id="floor2">
-              <div class="floor-label">
-                <span>Floor 2</span>
-                <button type="button" class="success button edit-btn" data-floor-number=2>Edit Graph</button>
-              </div> <!-- end .floor-label -->
-              <div class="floor-graph">
-                <div class='graph-container'>
-                  <img src='/images/floorplan7.jpg' class="floor-img" id='floor2-img'>
-                </div> <!-- end .graph-container -->
-              </div> <!-- end .floor-graph -->
-            </div> <!-- end .floor#floor2 -->
+              <div class="floor" id="<%= floorID %>">
+                <div class="floor-label">
+                  <span>Floor <%= floorNumber %></span>
+                  <button type="button" class="success button edit-btn" data-floor-number=<%= floorNumber %>>Edit Graph</button>
+                </div> <!-- end .floor-label -->
+                <div class="floor-graph">
+                  <div class='graph-container'>
+                    <img src='/images/floorplan7.jpg' class="floor-img" id="<%= imageID %>">
+                  </div> <!-- end .graph-container -->
 
-            <div class="floor" id="floor3">
-              <div class="floor-label">
-                <span>Floor 3</span>
-                <button type="button" class="success button edit-btn" data-floor-number=3>Edit Graph</button>
-              </div> <!-- end .floor-label -->
-              <div class="floor-graph">
-                <div class='graph-container'>
-                  <img src='/images/floorplan7.jpg' class="floor-img" id='floor3-img'>
-                </div> <!-- end .graph-container -->
-              </div> <!-- end .floor-graph -->
-            </div> <!-- end .floor#floor3 -->
+                  <div class="slider-container">
+                    <div class="slider-range" id="<%= sliderID %>"></div>
+                  </div> <!-- end .slider-container -->
+                </div> <!-- end .floor-graph -->
+              </div> <!-- end .floor#floor_ -->
 
-            <div class="floor" id="floor4">
-              <div class="floor-label">
-                <span>Floor 4</span>
-                <button type="button" class="success button edit-btn" data-floor-number=4>Edit Graph</button>
-              </div> <!-- end .floor-label -->
-              <div class="floor-graph">
-                <div class='graph-container'>
-                  <img src='/images/floorplan7.jpg' class="floor-img" id='floor4-img'>
-                </div> <!-- end .graph-container -->
-              </div> <!-- end .floor-graph -->
-            </div> <!-- end .floor#floor3 -->
+            <% } %>
 
           </div> <!-- end .floor-group -->
         </div> <!-- end .columns -->
@@ -110,6 +91,7 @@
 
   <script></script>
   <script src="/javascripts/jquery-2.2.0.min.js"></script>
+  <script src="/javascripts/jquery-ui.min.js"></script>
   <script src="/javascripts/foundation.min.js"></script>
   <script src="/javascripts/d3.v3.min.js"></script>
   <script src="/javascripts/jquery.qtip.min.js"></script>

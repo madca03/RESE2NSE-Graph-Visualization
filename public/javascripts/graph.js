@@ -1,5 +1,7 @@
 "use strict"
 
+/*************  Constants  *************/
+
 const BASEURL = "http://localhost:3000";
 // node visual properties
 const NODERADIUS = 8;
@@ -7,48 +9,48 @@ const NODEFILL = "black";
 // link visual properties
 const LINKSTROKEOPACITY = '1';
 const LINKSTROKEWIDTH = '2px';
-const UPDATERATE = 1000;
+const UPDATERATE = 5000;
 
 /*************  Application starts here  *************/
 
-var event_handler = new EventHandler();
-var graph_data = new GraphData($('.floor').length);
 var ui = new UI();
 
 $(function() {
-  ui.init();
-  ui.setFloorImageDimensions();
+  var eventHandler = new EventHandler();
+  var graphData = new GraphDataFetcher($('.floor').length);
 
-  graph_data.getDataForDisplay();
+  ui.init();
+
+  graphData.getDataForDisplay();
   var display_timer = setInterval(function() {
-    graph_data.getDataForDisplay();
+    graphData.getDataForDisplay();
   }, UPDATERATE);
 
   // function is called when the browser is resized
   window.onresize = function() {
     ui.updateUIOnBrowserResize();
-    graph_data.getDataForDisplay();
+    graphData.getDataForDisplay();
 
     clearInterval(display_timer);
 
     display_timer = setInterval(function() {
-      graph_data.getDataForDisplay();
+      graphData.getDataForDisplay();
     }, UPDATERATE);
   }
 
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
     clearInterval(display_timer);
-    event_handler.editBtnClicked(this.dataset.floorNumber);
+    eventHandler.editBtnClicked(this.dataset.floorNumber);
 
     // add event handler to cancel button
     $('.cancel-btn').on('click', function() {
-      event_handler.cancelBtnClicked();
+      eventHandler.cancelBtnClicked();
     });
 
     // add event handler to save button
     $('.save-btn').on('click', function() {
-      event_handler.saveBtnClicked();
+      eventHandler.saveBtnClicked();
     });
   });
 }); // end application block
@@ -66,14 +68,41 @@ function UI() {
 }
 
 UI.prototype.init = function() {
+  // Initialize the UI
   this.setFloorImageDimensions();
   this.setScrollToLink();
   this.setNavbars();
+  this.setTimeSlider();
 }
 
-UI.prototype.updateUIOnBrowserResize = function() {
-  this.setFloorImageDimensions();
-  this.updateSideNav();
+/**
+ * This method adds a time slider for each graph display. It first gets the
+ * total number of archive from the database and it uses this data to set
+ * the maximum value for the slider.
+ */
+UI.prototype.setTimeSlider = function() {
+  var request = $.ajax({
+    url: BASEURL + "/archive_count",
+    type: "GET",
+    dataType: "json"
+  });
+
+  request.done(function(data, statusText, jqXHR) {
+    $(".slider-range").slider({
+      range: "max",
+      max: data.archive_count,
+      value: data.archive_count,
+      change: function(event, ui) {
+        var max = $(".slider-range").slider("option", "max");
+
+        if (ui.value != max) {
+          
+        }
+      }
+    });
+
+
+  });
 }
 
 UI.prototype.setFloorImageDimensions = function() {
@@ -104,13 +133,6 @@ UI.prototype.setScrollToLink = function() {
       scrollTop: $(link).offset().top - top_offset
     }, 750);
   });
-}
-
-UI.prototype.updateSideNav = function() {
-  var sideNav = $('.nav-side');
-  var parentDivWidth = sideNav.parent().width();
-
-  sideNav.width(parentDivWidth);
 }
 
 UI.prototype.setNavbars = function() {
@@ -147,6 +169,28 @@ UI.prototype.setNavbars = function() {
   });
 }
 
+UI.prototype.updateUIOnBrowserResize = function() {
+  this.setFloorImageDimensions();
+  this.updateSideNav();
+}
+
+UI.prototype.updateSideNav = function() {
+  var sideNav = $('.nav-side');
+  var parentDivWidth = sideNav.parent().width();
+
+  sideNav.width(parentDivWidth);
+}
+
+/**
+ * This method updates the slider range to accomodate the new archive data
+ * stored in the database.
+ *
+ * @param {Number} archive_count: current total of archive sets in the database
+ */
+UI.prototype.updateSliderRange = function(archive_count) {
+  $('.slider-range').slider("option", "max", archive_count);
+}
+
 /*******************  END UI Class  ******************/
 
 
@@ -176,11 +220,11 @@ EventHandler.prototype.editBtnClicked = function(floorNumber) {
   newFloorImg.style.position = 'absolute';
   newFloorImg.style.zIndex = '-1';
 
-  graph_data.getDataForEdit(floorNumber);
+  graphData.getDataForEdit(floorNumber);
 }
 
 EventHandler.prototype.getUpdatedNodes = function() {
-  var nodes = graph_data.graphDrawer.nodes;
+  var nodes = graphData.graphDrawer.nodes;
   var modifiedNodes = [];
 
   for (var i = 0; i < nodes.length; i++) {
@@ -254,40 +298,58 @@ function GraphPerFloor(floorNumber, nodes, links) {
 /**************  END GraphPerFloor Class  ************/
 
 
-/******************  GraphData Class  ****************/
+/******************  GraphDataFetcher Class  ****************/
 
-function GraphData(floorCount) {
+function GraphDataFetcher(floorCount) {
   this.floorCount = floorCount;
   this.graphData = null;
   this.graphPerFloor = [];
   this.graphDrawer = new MultiGraphDrawer();
 }
 
-/*  This function gets the graph data containing the nodes with their
-    coordinates set and the links in between nodes. After a successful AJAX call,
-    it calls the draw_graph_for_display function and it passes to the function
-    the graph data from the AJAX call.
-*/
-GraphData.prototype.getDataForDisplay = function() {
-  var graphDataObj = this;
+/**
+  * This function gets the graph data containing the nodes with their
+  * coordinates set and the links in between nodes. After a successful AJAX
+  * call, it calls the draw_graph_for_display function and it passes to the
+  * function the graph data from the AJAX call.
+  * (in data.graph)
+  *
+  * Also included in the data is the current count of the archive sets.
+  * (in data.archive_count)
+  *
+  * This function should only be called for the graph display of guest users.
+  */
+
+GraphDataFetcher.prototype.getDataForDisplay = function() {
+  // Create a reference to "this" object to be used in the anonymous callback
+  // functions of the ajax call.
+  var thisObject = this;
 
   // ajax call for guest users
-  $.ajax({
+  var request = $.ajax({
     url: BASEURL + "/nodes_for_display",
     type: "GET",
     dataType: "json",
-    success: function(graphData) {
-      graphDataObj.getGraphPerFloor(graphData);
-      graphDataObj.graphDrawer.drawGraphsForDisplay(graphDataObj.graphPerFloor);
-      graphDataObj.graphPerFloor = [];  // set to empty array for next update
-    },
-    error: function(req, status, err) {
-      console.log(status, err);
-    }
+    async: "false",
+
+    // Pass the GraphDataFetcher object to the ajax request so that it can be used
+    // on the ajax's function callbacks
+    context: this
+  });
+
+  request.done(function(data, textStatus, jqXHR) {
+    ui.updateSliderRange(data.archive_count);
+    this.getGraphPerFloor(data.graph);
+    this.graphDrawer.drawGraphsForDisplay(this.graphPerFloor);
+    this.graphPerFloor = [];  // set to empty array for next update
+  });
+
+  request.fail(function(jqXHR, textStatus, errorThrown) {
+    console.log(textStatus, errorThrown);
   });
 }
 
-GraphData.prototype.getDataForEdit = function(floorNumber) {
+GraphDataFetcher.prototype.getDataForEdit = function(floorNumber) {
   var graphDataObj = this;
 
   // ajax call to get graph data
@@ -308,11 +370,13 @@ GraphData.prototype.getDataForEdit = function(floorNumber) {
   });
 }
 
-/*  arguments: unsorted graph dataset
-    return: Returns an array of graph dataset where each graph dataset element
-      corresponds to one floor.
-*/
-GraphData.prototype.getGraphPerFloor = function(graphData) {
+
+/**
+ * @param {object} graphData: unsorted graph dataset
+ * @return array of graph dataset where each graph dataset element
+ *    corresponds to one floor.
+ */
+GraphDataFetcher.prototype.getGraphPerFloor = function(graphData) {
   this.graphData = graphData;
 
   for (var i = 0; i < this.floorCount; i++) {
@@ -346,7 +410,7 @@ GraphData.prototype.getGraphPerFloor = function(graphData) {
   * @param {array} nodes - array of node objects on a given floor
   * @return {array} nodes - array of modified node objects
   */
-GraphData.prototype.modifyNodesForDisplay = function(nodes) {
+GraphDataFetcher.prototype.modifyNodesForDisplay = function(nodes) {
   for (var i = 0; i < nodes.length; i++) {
     nodes[i].scaledX = (ui.svgWidth * nodes[i].x_coordinate) / ui.baseSVGWidth;
     nodes[i].scaledY = (ui.svgHeight * nodes[i].y_coordinate) / ui.baseSVGHeight;
@@ -363,7 +427,7 @@ GraphData.prototype.modifyNodesForDisplay = function(nodes) {
   * @param {array} links - array of link objects on a given floor.
   * @return {array} modifiedLinks
   */
-GraphData.prototype.modifyLinks = function(nodes, links) {
+GraphDataFetcher.prototype.modifyLinks = function(nodes, links) {
   var modifiedLinks = [];
 
   for (var i = 0; i < links.length; i++) {
@@ -392,7 +456,7 @@ GraphData.prototype.modifyLinks = function(nodes, links) {
   return modifiedLinks;
 }
 
-GraphData.prototype.modifyNodes = function(nodes) {
+GraphDataFetcher.prototype.modifyNodes = function(nodes) {
   var modifiedNodes = [];
   nodes.forEach(function(node) {
     if (node.x_coordinate !== null) {
@@ -405,7 +469,7 @@ GraphData.prototype.modifyNodes = function(nodes) {
   return modifiedNodes;
 }
 
-/****************  END GraphData Class  **************/
+/****************  END GraphDataFetcher Class  **************/
 
 
 /***************  MultiGraphDrawer Class  ************/

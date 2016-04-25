@@ -8,7 +8,14 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/graph', function(req, res, next) {
-  res.render('graph');
+  var query = "SELECT COUNT(*) FROM floors";
+
+  models.sequelize.query(query, {type: models.sequelize.QueryTypes.SELECT })
+    .then(function(count) {
+      var floorCount = count[0]["COUNT(*)"];
+
+      res.render('graph', {floorCount: floorCount})
+    });
 });
 
 /* This route is being called by an ajax call when the application is in view mode.
@@ -24,20 +31,32 @@ router.get('/nodes_for_display', function(req, res, next) {
     + 'y AS y_coordinate, sensor_type, mac_address, last_transmission, '
     + 'packets_sent, packets_received, floor_number FROM Nodes '
     + 'WHERE coordinate_set=true;';
+
   var edge_query = 'SELECT edge_id AS id, source, target, traffic, '
     + 'floor_number FROM Edges '
     + 'WHERE source IN (SELECT node_id FROM Nodes WHERE coordinate_set=true) '
     + 'AND target IN (SELECT node_id FROM Nodes WHERE coordinate_set=true);';
 
+  var archive_count_query = 'SELECT COUNT(*) FROM Datetime_archives;';
+
   models.sequelize.query(node_query, { type: models.sequelize.QueryTypes.SELECT })  // Query the nodes
     .then(function(nodes) {
       models.sequelize.query(edge_query, { type: models.sequelize.QueryTypes.SELECT })  // Query the edges
         .then(function(edges) {
-          var graph = { // form the graph object containing the nodes and edges data
-            'nodes': nodes,
-            'links': edges
-          };
-          res.json(graph);  // send graph data as JSON
+          models.sequelize.query(archive_count_query, { type: models.sequelize.QueryTypes.SELECT }) // Query the archive_count
+            .then(function(count) {
+              var graph = { // form the graph object containing the nodes and edges data
+                'nodes': nodes,
+                'links': edges
+              };
+
+              var response = {
+                'archive_count': count[0]["COUNT(*)"],
+                'graph': graph
+              }
+
+              res.json(response);  // send graph data as JSON
+            });
         });
     });
 });
@@ -93,6 +112,15 @@ router.get('/node/:node_id', function(req, res, next) {
     .then(function(nodes) {
       var node = nodes[0];
       res.render('node', {node: node});
+    });
+});
+
+router.get('/archive_count', function(req, res, next) {
+  var query = "SELECT COUNT(*) FROM Datetime_archives;";
+
+  models.sequelize.query(query, { type: models.sequelize.QueryTypes.SELECT })
+    .then(function(count) {
+      res.json({ 'archive_count':count[0]["COUNT(*)"] });
     });
 });
 

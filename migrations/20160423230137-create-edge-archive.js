@@ -1,10 +1,10 @@
 'use strict';
 module.exports = {
   up: function(queryInterface, Sequelize) {
-    queryInterface.createTable('Edges', {
+    
+    queryInterface.createTable('Edge_archives', {
       edge_id: {
         allowNull: false,
-        primaryKey: true,
         type: Sequelize.STRING
       },
       source: {
@@ -29,9 +29,12 @@ module.exports = {
       }
     });
     
-    return queryInterface.addIndex('Edges', ['source', 'target']);
+    // return a promise from the queryInterface methods
+    return queryInterface.addIndex('Edge_archives', ['createdAt']);
+    
+    // return query;
   },
   down: function(queryInterface, Sequelize) {
-    return queryInterface.dropTable('Edges');
+    return queryInterface.dropTable('Edge_archives');
   }
 };
