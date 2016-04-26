@@ -47,7 +47,7 @@
                 <% for (var i = 0; i < floorCount; i++) { %>
                   <% var floorNumber = i + 1 %>
 
-                  <li><span class="floor-link" data-floor-number=1>Floor <%= floorNumber %></span></li>
+                  <li><span class="floor-link" data-floor-number=<%= floorNumber %>>Floor <%= floorNumber %></span></li>
                 <% } %>
 
               </ul>
@@ -75,7 +75,11 @@
                   </div> <!-- end .graph-container -->
 
                   <div class="slider-container">
-                    <div class="slider-range" id="<%= sliderID %>"></div>
+                    <div class="slider-label">
+                      <span>Time: </span>
+                      <span class="slider-time" id="slider-time-<%= (i + 1) %>"></span>
+                    </div> <!-- end .slider-label -->
+                    <div class="slider-range" id="<%= sliderID %>" data-floor-number=<%= floorNumber %>></div>
                   </div> <!-- end .slider-container -->
                 </div> <!-- end .floor-graph -->
               </div> <!-- end .floor#floor_ -->

@@ -126,17 +126,17 @@ class DBClient:
         """
 
         self.query_nodes()
-        
+
         nodes = []
-        
+
         # After executing the query, the cursor object will contain a list
         # of tuples and each tuple represents a row in the result set
 
         for (node_id, label, x, y, coordinate_set, sensor_type, mac_address,
-            last_transmission, packets_sent, packets_received, 
+            last_transmission, packets_sent, packets_received,
             floor_number) in self._cursor:
-            
-            
+
+
             insert_archive_node_statement = (""
                 "INSERT INTO node_archives "
                 "(node_id, label, x, y, coordinate_set, sensor_type, "
@@ -157,7 +157,7 @@ class DBClient:
                 "%(createdAt)s, "
                 "%(updatedAt)s )")
 
-            current_time = datetime.now()
+            current_time = datetime.utcnow()
 
             data_archive_node = {
                 'node_id': node_id,
@@ -176,12 +176,12 @@ class DBClient:
             }
 
             nodes.append((insert_archive_node_statement, data_archive_node))
-            
+
         # After creating the SQL insert statements for the archived nodes,
         # execute the SQL insert statements.
         self.insert_node_archive_data(nodes)
         self.insert_datetime_archive(current_time)
-        
+
         return current_time
 
     def query_nodes(self):
@@ -197,51 +197,94 @@ class DBClient:
 
     def insert_datetime_archive(self, current_time):
         """This method saves the date and time when the Nodes table is
-        archived. It stores the new datetime of the archive in the 
+        archived. It stores the new datetime of the archive in the
         Datetime_archives table.
-                
-            Args: 
-                current_time (datetime): the time when the Nodes table 
+
+            Args:
+                current_time (datetime): the time when the Nodes table
                     is archived.
-                
+
         """
-        
+
         insert_statement = ("INSERT INTO Datetime_archives "
                             "(datetime_archive) "
                             "VALUES ("
                             "%s )")
-        
+
         # Add extra comma to the tuple (current_time,)
         self._cursor.execute(insert_statement, (current_time,))
 
     def insert_links(self, links):
         """This method inserts new links in the Edges table
-        
+
         Args:
             links (list): list of tuples containing the links to be added
-        
+
         """
-        
+
         self.insert_data(links)
 
     def update_links(self, links):
         """This method updates the links to be displayed by first removing the
         links and then inserting the new links
-        
+
         Args:
             links (list): list of tuples containing the links to be added
         """
-        
+
         self.remove_links()
         self.insert_links(links)
-        
-        
-    def remove_links(self):
-        """This method removes all of the links in the Edges table
+
+
+    def getNodeCount(self):
+        """This method gets the total count of the nodes in the Nodes table
         
         """
-        query = "DELETE FROM Edges"
+        query = "SELECT COUNT(*) FROM Nodes"
         
+        self._cursor.execute(query)
+        
+        for (node_count,) in self._cursor:
+            return node_count
+
+    def getFloorCount(self):
+        """This method gets the number of floors.
+        
+        """
+        
+        query = "SELECT COUNT(*) FROM Floors"
+        
+        self._cursor.execute(query)
+        
+        for (floor_count,) in self._cursor:
+            return floor_count
+        
+    def getNodeCountPerFloor(self):
+        node_count = self.getNodeCount()
+        floor_count = self.getFloorCount()
+        
+        return node_count / floor_count
+
+    def getEdgeCount(self):
+        query = "SELECT COUNT(*) FROM Edges"
+        
+        self._cursor.execute(query)
+        
+        for (edge_count,) in self._cursor:
+            return edge_count
+
+    def getEdgeCountPerFloor(self):
+        edge_count = self.getEdgeCount()
+        floor_count = self.getFloorCount()
+        
+        return edge_count / floor_count
+
+    def remove_links(self):
+        """This method removes all of the links in the Edges table
+
+        """
+        query = "DELETE FROM Edges"
+
         self._cursor.execute(query)
 
     def commit(self):

@@ -9,22 +9,42 @@ const NODEFILL = "black";
 // link visual properties
 const LINKSTROKEOPACITY = '1';
 const LINKSTROKEWIDTH = '2px';
-const UPDATERATE = 5000;
+const UPDATERATE = 4000;
 
 /*************  Application starts here  *************/
 
+var floorCount = $('.floor').length;
+
+// This wlll be the storage for all of the Floor objects.
+var floors = [];
+
 var ui = new UI();
+var graphData = new GraphDataFetcher(floorCount, floors);
 
 $(function() {
-  var eventHandler = new EventHandler();
-  var graphData = new GraphDataFetcher($('.floor').length);
-
   ui.init();
+  var eventHandler = new EventHandler();
+  ui.setTimeSlider();
 
   graphData.getDataForDisplay();
   var display_timer = setInterval(function() {
     graphData.getDataForDisplay();
   }, UPDATERATE);
+
+  // for (var i = 1; i <= 120; i++) {
+  //     setTimeout(function() {
+  //       graphData.getDataForDisplay();
+  //     }, 1000 * i);
+  // }
+
+
+  // setTimeout(function() {
+  //   graphData.getDataForDisplay();
+  // }, 1000);
+
+  // setTimeout(function() {
+  //   graphData.getDataForDisplay();
+  // }, 6000);
 
   // function is called when the browser is resized
   window.onresize = function() {
@@ -41,7 +61,7 @@ $(function() {
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
     clearInterval(display_timer);
-    eventHandler.editBtnClicked(this.dataset.floorNumber);
+    eventHandler.editBtnClicked($(this).data("floorNumber"));
 
     // add event handler to cancel button
     $('.cancel-btn').on('click', function() {
@@ -65,14 +85,17 @@ function UI() {
   this.svgHeight = null;
   this.baseSVGWidth = 866;
   this.baseSVGHeight = 396;
+  this.initialDisplay = true;
+  this.archive_date = [];
 }
 
+/**
+ * This method initializes the UI components to be used for the graph display.
+ */
 UI.prototype.init = function() {
-  // Initialize the UI
   this.setFloorImageDimensions();
   this.setScrollToLink();
   this.setNavbars();
-  this.setTimeSlider();
 }
 
 /**
@@ -81,27 +104,78 @@ UI.prototype.init = function() {
  * the maximum value for the slider.
  */
 UI.prototype.setTimeSlider = function() {
-  var request = $.ajax({
-    url: BASEURL + "/archive_count",
-    type: "GET",
-    dataType: "json"
-  });
-
-  request.done(function(data, statusText, jqXHR) {
-    $(".slider-range").slider({
+  var thisObj = this;
+  
+  $(".slider-range").slider({
       range: "max",
-      max: data.archive_count,
-      value: data.archive_count,
+      min: 1,
+      disabled: true,
+      slide: function(event, ui) {
+          var floorNumber = $(this).data("floorNumber");
+          var floor = null;
+        
+          for (var i = 0; i < floors.length; i++) {
+            if (floors[i].floorNumber === floorNumber) {
+              floor = floors[i];
+              break;
+            }
+          }
+          
+          // update the time-label of the graph
+          var date = new Date(thisObj.archive_date[ui.value - 1].datetime_archive);
+          
+          var date_options = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            timeZoneName: 'long'
+          };
+          
+          $("#slider-time-" + floor.floorNumber)
+            .html(date.toLocaleString('en-us', date_options));
+      },
       change: function(event, ui) {
         var max = $(".slider-range").slider("option", "max");
+        var floorNumber = $(this).data("floorNumber");
+        var floor = null;
+
+        // global variable "floors"
+        // find the floor object corresponding to this slider
+        for (var i = 0; i < floors.length; i++) {
+          if (floors[i].floorNumber === floorNumber) {
+            floor = floors[i];
+            break;
+          }
+        }
 
         if (ui.value != max) {
+          /*
+            disable the update on the floor so that the graph for the
+            time specified is shown.
+            continuously update other floors whose ui.value is equal to
+            the max time.
+          */
+
+          floor.updateDisabled = true;
+          if (floor.recentlyDisabled) {
+            floor.updateJustEnabled = false;
+          }
+
+          // update the display for the specific floor to show the graph
+          // for the chosen time.
+          graphData.getArchiveDataForDisplay(floorNumber, ui.value);
           
+        } else {
+          if (floor.updateDisabled) {
+            floor.updateDisabled = false;
+            floor.updateJustEnabled = true;
+          }
         }
       }
-    });
-
-
   });
 }
 
@@ -188,7 +262,61 @@ UI.prototype.updateSideNav = function() {
  * @param {Number} archive_count: current total of archive sets in the database
  */
 UI.prototype.updateSliderRange = function(archive_count) {
+  var sliders = $('.slider-range').toArray();
+
+  // for each slider, update the slider value if the current slider is
+  // pointing to the max value
+  for (var i = 0; i < sliders.length; i++) {
+    var currentSliderValue = $(sliders[i]).slider("option", "value");
+    var currentSliderMax = $(sliders[i]).slider("option", "max");
+
+    if (currentSliderValue === currentSliderMax) {
+      $(sliders[i]).slider("option", "value", archive_count);
+    }
+  }
+
+  // update the max value of all the sliders to the current archive count
   $('.slider-range').slider("option", "max", archive_count);
+
+  // for the initial/first graph display, enable the use of the slider and
+  // set the current slider value to archive_count
+  if (this.initialDisplay) {
+    $('.slider-range').slider("option", "disabled", false);
+    $('.slider-range').slider("value", archive_count);
+    this.initialDisplay = false;
+  }
+}
+
+UI.prototype.updateArchiveDate = function(archive_date) {
+  // update the array of archive dates
+  for (var i = this.archive_date.length; i < archive_date.length; i++) {
+    this.archive_date.push(archive_date[i]);
+  }
+  
+  var sliders = $('.slider-range').toArray();  
+  var currentMax = $('.slider-range').slider("option", "max");
+ 
+  for (var i = 0; i < sliders.length; i++) {
+    var currentValue = $(sliders[i]).slider("option", "value");
+    
+    if (currentValue === currentMax) {
+      var slider_time = $(sliders[i]).prev().children('.slider-time')[0]
+      var date = new Date(this.archive_date[this.archive_date.length - 1].datetime_archive);
+      
+      var date_options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        timeZoneName: 'long'
+      }
+      
+      $(slider_time).html(date.toLocaleString('en-us', date_options));
+    }   
+  }
 }
 
 /*******************  END UI Class  ******************/
@@ -287,24 +415,26 @@ EventHandler.prototype.newFloorLabel = function(floorNumber) {
 /**************  END EventHandler Class  *************/
 
 
-/****************  GraphPerFloor Class  **************/
+/****************  Floor Class  **************/
 
-function GraphPerFloor(floorNumber, nodes, links) {
+function Floor(floorNumber, nodes, links) {
   this.nodes = nodes;
   this.links = links;
   this.floorNumber = floorNumber;
+  this.updateDisabled = false;
+  this.updateJustEnabled = false;
 }
 
-/**************  END GraphPerFloor Class  ************/
+/**************  END Floor Class  ************/
 
 
 /******************  GraphDataFetcher Class  ****************/
 
-function GraphDataFetcher(floorCount) {
+function GraphDataFetcher(floorCount, floors) {
   this.floorCount = floorCount;
-  this.graphData = null;
-  this.graphPerFloor = [];
+  this.floors = floors;
   this.graphDrawer = new MultiGraphDrawer();
+  this.initialDataFetch = true;
 }
 
 /**
@@ -321,16 +451,11 @@ function GraphDataFetcher(floorCount) {
   */
 
 GraphDataFetcher.prototype.getDataForDisplay = function() {
-  // Create a reference to "this" object to be used in the anonymous callback
-  // functions of the ajax call.
-  var thisObject = this;
-
   // ajax call for guest users
   var request = $.ajax({
     url: BASEURL + "/nodes_for_display",
     type: "GET",
     dataType: "json",
-    async: "false",
 
     // Pass the GraphDataFetcher object to the ajax request so that it can be used
     // on the ajax's function callbacks
@@ -338,10 +463,17 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
   });
 
   request.done(function(data, textStatus, jqXHR) {
-    ui.updateSliderRange(data.archive_count);
+    // separate the graph data per floor
     this.getGraphPerFloor(data.graph);
-    this.graphDrawer.drawGraphsForDisplay(this.graphPerFloor);
-    this.graphPerFloor = [];  // set to empty array for next update
+
+    // draw all of the graphs
+    this.graphDrawer.drawGraphsForDisplay(this.floors);
+
+    // update the maximum value of the slider to the total archive count
+    ui.updateSliderRange(data.archive_count);
+    
+    // update the array of archive dates stores in the UI object
+    ui.updateArchiveDate(data.archive_date);
   });
 
   request.fail(function(jqXHR, textStatus, errorThrown) {
@@ -359,9 +491,11 @@ GraphDataFetcher.prototype.getDataForEdit = function(floorNumber) {
     dataType: 'json',
     success: function(graph) {
       var links = graphDataObj.modifyLinks(graph.nodes, graph.links);
-      var nodes = graphDataObj.modifyNodes(graph.nodes);
+      var nodes = graphDataObj.modifyNodesForEdit(graph.nodes);
 
-      graphDataObj.graphDrawer = new SingleGraphDrawer(nodes, links, floorNumber);
+      var floor_for_edit = new Floor(floorNumber, nodes, links);
+
+      graphDataObj.graphDrawer = new SingleGraphDrawer(floor_for_edit);
       graphDataObj.graphDrawer.drawGraphForEdit();
     },
     error: function(req, status, err) {
@@ -372,31 +506,60 @@ GraphDataFetcher.prototype.getDataForEdit = function(floorNumber) {
 
 
 /**
+ * This method sorts the graph data per floor from the given data
+ * received from the getDataForDisplay()'s ajax call.
+ *
  * @param {object} graphData: unsorted graph dataset
  * @return array of graph dataset where each graph dataset element
  *    corresponds to one floor.
  */
 GraphDataFetcher.prototype.getGraphPerFloor = function(graphData) {
-  this.graphData = graphData;
 
-  for (var i = 0; i < this.floorCount; i++) {
-    // get the nodes for the current floor
-    var nodes = this.graphData.nodes.filter(function(node) {
-      return node.floor_number === (i + 1);
-    })
+  if (this.initialDataFetch) {
+    // set the initialDataFetch attribute to false so that this will not be
+    // executed for the next graph update
+    this.initialDataFetch = false;
 
-    // get the links for the current floor
-    var links = this.graphData.links.filter(function(link) {
-      return link.floor_number === (i + 1);
-    });
+    for (var i = 0; i < this.floorCount; i++) {
+      // get the nodes for the current floor
+      var nodes = graphData.nodes.filter(function(node) {
+        return node.floor_number === (i + 1);
+      });
 
-    // modify links and nodes
-    this.modifyNodesForDisplay(nodes);
-    links = this.modifyLinks(nodes, links);
+      // get the links for the current floor
+      var links = graphData.links.filter(function(link) {
+        return link.floor_number === (i + 1);
+      });
 
-    // create a new "GraphPerFloor" object containing the nodes and links
-    // for the graph on that floor.
-    this.graphPerFloor.push(new GraphPerFloor(i + 1, nodes, links));
+      // modify links and nodes
+      this.modifyNodesForDisplay(nodes);
+      links = this.modifyLinks(nodes, links);
+
+      // create a new "Floor" object containing the nodes and links
+      // for the graph on that floor.
+      this.floors.push(new Floor(i + 1, nodes, links));
+    }
+  }
+
+  else {
+    // This code block updates the nodes and links of each Floor object
+    // This code block is called for every update on the graph display
+
+    for (var i = 0; i < this.floors.length; i++) {
+      var floor = this.floors[i];
+
+      var nodes = graphData.nodes.filter(function(node) {
+        return node.floor_number === floor.floorNumber;
+      });
+
+      var links = graphData.links.filter(function(link) {
+        return link.floor_number === floor.floorNumber;
+      });
+
+      this.modifyNodesForDisplay(nodes);
+      this.floors[i].nodes = nodes;
+      this.floors[i].links = this.modifyLinks(nodes, links);
+    }
   }
 }
 
@@ -456,7 +619,7 @@ GraphDataFetcher.prototype.modifyLinks = function(nodes, links) {
   return modifiedLinks;
 }
 
-GraphDataFetcher.prototype.modifyNodes = function(nodes) {
+GraphDataFetcher.prototype.modifyNodesForEdit = function(nodes) {
   var modifiedNodes = [];
   nodes.forEach(function(node) {
     if (node.x_coordinate !== null) {
@@ -469,6 +632,38 @@ GraphDataFetcher.prototype.modifyNodes = function(nodes) {
   return modifiedNodes;
 }
 
+/**
+ * This method gets and updates the graph data for a specific floor and time.
+ *
+ * @param {Number} floorNumber: the floor to be updated with the archive graph data.
+ * @param {Number} dateArchiveID: the ID of the archive date in the database.
+ */
+GraphDataFetcher.prototype.getArchiveDataForDisplay = function(floorNumber, dateArchiveID) {
+  var request = $.ajax({
+    url: BASEURL + "/archive/floor/" + floorNumber + "/date/" + dateArchiveID,
+    type: "GET",
+    dataType: "json",
+    context: this
+  });
+
+  request.done(function(data, statusText, jqXHR) {
+    // console.log(data);
+
+    // find the Floor object which should be updated with the archive graph data
+    for (var i = 0; i < this.floors.length; i++) {
+      if (this.floors[i].floorNumber === floorNumber) {
+        this.modifyNodesForDisplay(data.nodes);
+        this.floors[i].nodes = data.nodes;
+        this.floors[i].links = this.modifyLinks(data.nodes, data.links);
+        
+        // update the graph display
+        var singleGraphDrawer = new SingleGraphDrawer(this.floors[i]);
+        singleGraphDrawer.updateArchiveGraphDisplay();
+      }
+    }
+  });
+}
+
 /****************  END GraphDataFetcher Class  **************/
 
 
@@ -478,19 +673,22 @@ function MultiGraphDrawer() {
   this.graphsDisplayed = false;
 }
 
-/*
-  @param graphPerFloor = array
-*/
-MultiGraphDrawer.prototype.drawGraphsForDisplay = function(graphPerFloor) {
-  for (var i = 0; i < graphPerFloor.length; i++) {
+/**
+  * @param floors = array of Floor objects each containing node and link data
+  */
+MultiGraphDrawer.prototype.drawGraphsForDisplay = function(floors) {
+  for (var i = 0; i < floors.length; i++) {
+    // check if it's the first time the graph is being displayed or not
     if (this.graphsDisplayed) {
-      // console.log("drawGraphsForDisplay");
-      (new SingleGraphDrawer(graphPerFloor[i].nodes, graphPerFloor[i].links,
-        graphPerFloor[i].floorNumber)).updateGraphDisplay();
+      // check if the graph on a specific floor is to be updated or not
+      if (!floors[i].updateDisabled) {  // if floor can be updated
+        var singleGraphDrawer = new SingleGraphDrawer(floors[i]);
+        singleGraphDrawer.updateGraphDisplay();
+      }
     }
     else {
-      (new SingleGraphDrawer(graphPerFloor[i].nodes, graphPerFloor[i].links,
-        graphPerFloor[i].floorNumber)).drawGraphDisplay();
+      var singleGraphDrawer = new SingleGraphDrawer(floors[i]);
+      singleGraphDrawer.drawGraphDisplay();
     }
   }
 
@@ -502,21 +700,21 @@ MultiGraphDrawer.prototype.drawGraphsForDisplay = function(graphPerFloor) {
 
 /***************  SingleGraphDrawer Class  ***********/
 
-function SingleGraphDrawer(nodes, links, floorNumber) {
-  this.floorNumber = floorNumber;
-  this.nodes = nodes;
-  this.links = links;
+function SingleGraphDrawer(floor) {
+  this.floorNumber = floor.floorNumber;
+  this.nodes = floor.nodes;
+  this.links = floor.links;
   this.svgStage = null;
   this.width = ui.svgWidth;
   this.height = ui.svgHeight;
   this.linkSelection = null;
   this.nodeSelection = null;
-  this.floorSelector = "div#floor" + floorNumber.toString() + " .graph-container";
+  this.floorSelector = "div#floor" + this.floorNumber.toString() + " .graph-container";
   this.force = null;
   this.forEdit = false;
   this.baseGraphContainerWidth = 866;
   this.baseGraphContainerHeight = 396;
-  this.forUpdate = false;
+  this.updateJustEnabled = floor.updateJustEnabled;
 }
 
 SingleGraphDrawer.prototype.createArrowHead = function() {
@@ -543,20 +741,49 @@ SingleGraphDrawer.prototype.drawGraphDisplay = function() {
   this.createArrowHead();
   this.getLinkSelection();
   this.getNodeSelection();
+  this.scaleNodePosition();
   this.createSVGLinks();
   this.createSVGNodes();
 }
 
 SingleGraphDrawer.prototype.updateGraphDisplay = function() {
-  // console.log("updateGraphDisplay function");
-  this.forUpdate = true;
-  // update graph display
-  this.getSVGStage();
-  this.getNodeSelection();
-  this.removeOldSVGLinks();
-  this.scaleNodePosition();
-  this.updateSVGLinkSelection();
-  this.createSVGLinks();
+  // This block is for normal graph update
+    this.getSVGStage();
+    this.removeSVGLinks();
+     
+    this.getNodeSelection();
+    this.getLinkSelection();
+    
+    this.scaleNodePosition();
+    this.createSVGLinks();
+    
+    if (this.updateJustEnabled) {
+      this.removeSVGNodes();
+      this.getNodeSelection();
+      this.createSVGNodes();
+    }
+}
+
+SingleGraphDrawer.prototype.updateArchiveGraphDisplay = function() {
+  // This block is for updating the graph display for archive graph dataset
+    this.getSVGStage();
+    this.removeSVGLinks();
+    this.removeSVGNodes();
+    
+    this.getNodeSelection();
+    this.getLinkSelection();
+    
+    this.scaleNodePosition();
+    this.createSVGLinks();
+    this.createSVGNodes();
+}
+
+SingleGraphDrawer.prototype.removeSVGLinks = function() {
+  $(this.floorSelector + " svg g.links-group").empty();
+}
+
+SingleGraphDrawer.prototype.removeSVGNodes = function() {
+  $(this.floorSelector + " svg g.nodes-group").empty();
 }
 
 SingleGraphDrawer.prototype.scaleNodePosition = function() {
@@ -720,9 +947,19 @@ SingleGraphDrawer.prototype.getNodeSelection = function() {
     .data(this.nodes);
 }
 
+/**
+ * This method SVG nodes from the previous graph dataset.
+ */
+SingleGraphDrawer.prototype.removeOldSVGNodes = function() {
+  this.nodeSelection = this.svgStage.select("g.nodes-group")
+    .selectAll("g.node")
+    .data([]);
+   this.nodeSelection.exit().remove();
+}
+
 SingleGraphDrawer.prototype.createSVGLinks = function() {
   this.createArrowHead();
-
+  
   // "Enter" sub-selection
   this.linkSelection.enter()
     .append("path")
@@ -739,13 +976,23 @@ SingleGraphDrawer.prototype.removeOldSVGLinks = function() {
   this.linkSelection.exit().remove();
 }
 
+/**
+ * This method updates the link selection by binding the new link data
+ * to the SVG links.path.
+ */
 SingleGraphDrawer.prototype.updateSVGLinkSelection = function() {
   this.linkSelection = this.linkSelection.data(this.links);
 }
 
-SingleGraphDrawer.prototype.computeLinkCurvature = function() {
-  var forUpdateDisplay = this.forUpdate;
+/**
+ * This method updates the node selection by binding the new node data
+ * to the SVG g.nodes
+ */
+SingleGraphDrawer.prototype.updateSVGNodeSelection = function() {
+  this.nodeSelection = this.nodeSelection.data(this.nodes);
+}
 
+SingleGraphDrawer.prototype.computeLinkCurvature = function() {
   // The "d" attribute of the SVG path element specifies the type of path
   // that links the two nodes. In this case, the type of path is an arc
   this.linkSelection.attr("d", function(d) {

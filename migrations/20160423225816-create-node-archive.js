@@ -1,7 +1,7 @@
 'use strict';
 module.exports = {
   up: function(queryInterface, Sequelize) {
-    return queryInterface.createTable('Node_archives', {
+    queryInterface.createTable('Node_archives', {
       node_id: {
         allowNull: false,
         type: Sequelize.STRING
@@ -47,6 +47,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
+    }).then(function() {
+      // return a promise from the queryInterface methods
+      return queryInterface.addIndex('Node_archives', ['createdAt']);
     });
   },
   down: function(queryInterface, Sequelize) {

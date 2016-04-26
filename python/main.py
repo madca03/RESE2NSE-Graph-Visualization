@@ -13,8 +13,6 @@ def generate_link_data(num_nodes, num_edges, time_of_archive):
 
     for floor_number in range(num_floors):
         for i in range(num_edges):
-            current_time = datetime.now()
-
             edge_id = 'e{0}'.format((link_count))
             traffic_index = math.floor(random() * len(traffic))
 
@@ -60,14 +58,6 @@ def generate_sql_insert_links(table_name, data_links):
     return links
 
 def main():
-    if len(sys.argv) < 4:
-        print("Wrong number of arguments")
-        exit(1)
-
-    num_nodes = int(sys.argv[1])
-    num_edges = int(sys.argv[2])
-    sleep_time = int(sys.argv[3])
-
     db_config = {
         'user': 'rese2nse',
         'password': 'rese2nse',
@@ -77,7 +67,11 @@ def main():
     db_client = DBClient(db_config)
     db_client.start_connection()
     db_client.use_database('graph')
-
+    
+    num_nodes = int(db_client.getNodeCountPerFloor())
+    num_edges = int(db_client.getEdgeCountPerFloor())
+    sleep_time = 5
+    
     while True:
         print("Archiving nodes and adding new edges")
         time_of_archive = db_client.create_node_archive()

@@ -1,7 +1,7 @@
 'use strict';
 module.exports = {
   up: function(queryInterface, Sequelize) {
-    
+
     queryInterface.createTable('Edge_archives', {
       edge_id: {
         allowNull: false,
@@ -27,11 +27,13 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
+    }).then(function() {
+      // return a promise from the queryInterface methods
+      return queryInterface.addIndex('Edge_archives', ['createdAt']);
     });
-    
-    // return a promise from the queryInterface methods
-    return queryInterface.addIndex('Edge_archives', ['createdAt']);
-    
+
+
+
     // return query;
   },
   down: function(queryInterface, Sequelize) {
