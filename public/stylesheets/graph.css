@@ -265,3 +265,16 @@ svg {
 .slider-container {
   padding-top: 1.7rem;
 }
+
+.slider-label {
+  color: #615D5D;
+  padding-bottom: 13px;
+}
+
+.slider-range {
+  background: #F4FFF1;
+}
+
+.ui-slider-range {
+  background: rgb(77, 189, 57);
+}

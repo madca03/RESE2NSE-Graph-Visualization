@@ -1,9 +1,11 @@
-from DBClient import DBClient
+from dbClient import dbClient
 from random import random
 from datetime import datetime
-import math
+from logger import log
 from time import sleep
+import math
 import sys
+import signal
 
 def generate_link_data(num_nodes, num_edges, time_of_archive):
     data_link_archives = []
@@ -57,37 +59,42 @@ def generate_sql_insert_links(table_name, data_links):
 
     return links
 
-def main():
-    db_config = {
-        'user': 'rese2nse',
-        'password': 'rese2nse',
-        'host': '127.0.0.1'
-    }
-
-    db_client = DBClient(db_config)
-    db_client.start_connection()
-    db_client.use_database('graph')
-    
-    num_nodes = int(db_client.getNodeCountPerFloor())
-    num_edges = int(db_client.getEdgeCountPerFloor())
-    sleep_time = 5
-    
-    while True:
-        print("Archiving nodes and adding new edges")
-        time_of_archive = db_client.create_node_archive()
-
-        data_links = generate_link_data(num_nodes, num_edges, time_of_archive)
-        links_for_archive = generate_sql_insert_links('Edge_archives', data_links)
-        db_client.insert_link_archive_data(links_for_archive)
-
-        links_for_display = generate_sql_insert_links('Edges', data_links)
-        db_client.update_links(links_for_display)
-        db_client.commit()
-
-        print("Done in archiving.")
-        # wait for T seconds
-        sleep(sleep_time)
-
+def handler(signum, frame):
     db_client.close_connection()
+    log.d("main", "Exiting...")
+    sys.exit(0)
 
-main()
+
+signal.signal(signal.SIGINT, handler)
+
+db_config = {
+    'user': 'rese2nse',
+    'password': 'rese2nse',
+    'host': '127.0.0.1'
+}
+
+db_client = dbClient(db_config)
+db_client.start_connection()
+db_client.use_database('graph')
+
+num_nodes = int(db_client.getNodeCountPerFloor())
+num_edges = int(db_client.getEdgeCountPerFloor())
+sleep_time = 2
+tag = "main"
+
+while True:
+    log.d(tag, "Archiving nodes and adding new edges")
+    time_of_archive = db_client.create_node_archive()
+
+    data_links = generate_link_data(num_nodes, num_edges, time_of_archive)
+    links_for_archive = generate_sql_insert_links('Edge_archives', data_links)
+    db_client.insert_link_archive_data(links_for_archive)
+
+    links_for_display = generate_sql_insert_links('Edges', data_links)
+    db_client.update_links(links_for_display)
+    db_client.commit()
+
+    log.d(tag, "Archive done")
+
+    # pause for T seconds
+    sleep(sleep_time)

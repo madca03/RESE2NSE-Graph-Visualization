@@ -9,7 +9,7 @@ const NODEFILL = "black";
 // link visual properties
 const LINKSTROKEOPACITY = '1';
 const LINKSTROKEWIDTH = '2px';
-const UPDATERATE = 4000;
+const UPDATERATE = 1000;
 
 /*************  Application starts here  *************/
 
@@ -105,7 +105,7 @@ UI.prototype.init = function() {
  */
 UI.prototype.setTimeSlider = function() {
   var thisObj = this;
-  
+
   $(".slider-range").slider({
       range: "max",
       min: 1,
@@ -113,17 +113,17 @@ UI.prototype.setTimeSlider = function() {
       slide: function(event, ui) {
           var floorNumber = $(this).data("floorNumber");
           var floor = null;
-        
+
           for (var i = 0; i < floors.length; i++) {
             if (floors[i].floorNumber === floorNumber) {
               floor = floors[i];
               break;
             }
           }
-          
+
           // update the time-label of the graph
           var date = new Date(thisObj.archive_date[ui.value - 1].datetime_archive);
-          
+
           var date_options = {
             weekday: 'long',
             year: 'numeric',
@@ -134,7 +134,7 @@ UI.prototype.setTimeSlider = function() {
             second: 'numeric',
             timeZoneName: 'long'
           };
-          
+
           $("#slider-time-" + floor.floorNumber)
             .html(date.toLocaleString('en-us', date_options));
       },
@@ -168,7 +168,7 @@ UI.prototype.setTimeSlider = function() {
           // update the display for the specific floor to show the graph
           // for the chosen time.
           graphData.getArchiveDataForDisplay(floorNumber, ui.value);
-          
+
         } else {
           if (floor.updateDisabled) {
             floor.updateDisabled = false;
@@ -292,17 +292,17 @@ UI.prototype.updateArchiveDate = function(archive_date) {
   for (var i = this.archive_date.length; i < archive_date.length; i++) {
     this.archive_date.push(archive_date[i]);
   }
-  
-  var sliders = $('.slider-range').toArray();  
+
+  var sliders = $('.slider-range').toArray();
   var currentMax = $('.slider-range').slider("option", "max");
- 
+
   for (var i = 0; i < sliders.length; i++) {
     var currentValue = $(sliders[i]).slider("option", "value");
-    
+
     if (currentValue === currentMax) {
       var slider_time = $(sliders[i]).prev().children('.slider-time')[0]
       var date = new Date(this.archive_date[this.archive_date.length - 1].datetime_archive);
-      
+
       var date_options = {
         weekday: 'long',
         year: 'numeric',
@@ -313,9 +313,9 @@ UI.prototype.updateArchiveDate = function(archive_date) {
         second: 'numeric',
         timeZoneName: 'long'
       }
-      
+
       $(slider_time).html(date.toLocaleString('en-us', date_options));
-    }   
+    }
   }
 }
 
@@ -471,7 +471,7 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
 
     // update the maximum value of the slider to the total archive count
     ui.updateSliderRange(data.archive_count);
-    
+
     // update the array of archive dates stores in the UI object
     ui.updateArchiveDate(data.archive_date);
   });
@@ -655,7 +655,7 @@ GraphDataFetcher.prototype.getArchiveDataForDisplay = function(floorNumber, date
         this.modifyNodesForDisplay(data.nodes);
         this.floors[i].nodes = data.nodes;
         this.floors[i].links = this.modifyLinks(data.nodes, data.links);
-        
+
         // update the graph display
         var singleGraphDrawer = new SingleGraphDrawer(this.floors[i]);
         singleGraphDrawer.updateArchiveGraphDisplay();
@@ -750,13 +750,13 @@ SingleGraphDrawer.prototype.updateGraphDisplay = function() {
   // This block is for normal graph update
     this.getSVGStage();
     this.removeSVGLinks();
-     
+
     this.getNodeSelection();
     this.getLinkSelection();
-    
+
     this.scaleNodePosition();
     this.createSVGLinks();
-    
+
     if (this.updateJustEnabled) {
       this.removeSVGNodes();
       this.getNodeSelection();
@@ -769,10 +769,10 @@ SingleGraphDrawer.prototype.updateArchiveGraphDisplay = function() {
     this.getSVGStage();
     this.removeSVGLinks();
     this.removeSVGNodes();
-    
+
     this.getNodeSelection();
     this.getLinkSelection();
-    
+
     this.scaleNodePosition();
     this.createSVGLinks();
     this.createSVGNodes();
@@ -959,7 +959,7 @@ SingleGraphDrawer.prototype.removeOldSVGNodes = function() {
 
 SingleGraphDrawer.prototype.createSVGLinks = function() {
   this.createArrowHead();
-  
+
   // "Enter" sub-selection
   this.linkSelection.enter()
     .append("path")

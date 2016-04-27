@@ -1,8 +1,9 @@
 import mysql.connector
 from mysql.connector import errorcode
 from datetime import datetime
+from logger import log
 
-class DBClient:
+class dbClient:
     """The DBClient class allows a user to connect to a mysql database given
     the user's credentials
 
@@ -27,12 +28,15 @@ class DBClient:
         """
 
         self._db_config = db_config
+        self._tag = 'dbClient'
 
     def start_connection(self):
         """This method creates a MySQLConnection object which is then used to
         connect to the specific MySQL database
 
         """
+
+        log.d(self._tag, "Starting DB Connection")
 
         try:
             # create a mysql connection object
@@ -51,6 +55,8 @@ class DBClient:
 
             exit(1)
 
+        log.d(self._tag, "Connected to MySQL")
+
     def use_database(self, db_name):
         """This method connects to a specific database. The DBClient object
         should have first started a mysql connection using the user's
@@ -60,6 +66,7 @@ class DBClient:
             db_name (str): The name of the database to connect to.
 
         """
+
         self._db_name = db_name
 
         try:
@@ -71,6 +78,8 @@ class DBClient:
                 print("Error: {}".format(err))
 
             exit(1)
+
+        log.d(self._tag, "Connected to " + self._db_name + " database")
 
     def insert_node_archive_data(self, nodes):
         """This method inserts new links in the "node_archives" table.
@@ -238,45 +247,45 @@ class DBClient:
 
     def getNodeCount(self):
         """This method gets the total count of the nodes in the Nodes table
-        
+
         """
         query = "SELECT COUNT(*) FROM Nodes"
-        
+
         self._cursor.execute(query)
-        
+
         for (node_count,) in self._cursor:
             return node_count
 
     def getFloorCount(self):
         """This method gets the number of floors.
-        
+
         """
-        
+
         query = "SELECT COUNT(*) FROM Floors"
-        
+
         self._cursor.execute(query)
-        
+
         for (floor_count,) in self._cursor:
             return floor_count
-        
+
     def getNodeCountPerFloor(self):
         node_count = self.getNodeCount()
         floor_count = self.getFloorCount()
-        
+
         return node_count / floor_count
 
     def getEdgeCount(self):
         query = "SELECT COUNT(*) FROM Edges"
-        
+
         self._cursor.execute(query)
-        
+
         for (edge_count,) in self._cursor:
             return edge_count
 
     def getEdgeCountPerFloor(self):
         edge_count = self.getEdgeCount()
         floor_count = self.getFloorCount()
-        
+
         return edge_count / floor_count
 
     def remove_links(self):
