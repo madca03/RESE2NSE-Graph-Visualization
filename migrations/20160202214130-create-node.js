@@ -1,62 +1,40 @@
 'use strict';
 module.exports = {
   up: function(queryInterface, Sequelize) {
-    queryInterface.createTable('Nodes', {
-      node_id: {
+    return queryInterface.createTable('nodes', {
+      id: {
         allowNull: false,
         primaryKey: true,
-        type: Sequelize.STRING
+        autoIncrement: true,
+        type: Sequelize.INTEGER
       },
       label: {
-        type: Sequelize.STRING
-        // allowNull: false
+        type: Sequelize.STRING,
+        allowNull: false
       },
-      x: {
-        type: Sequelize.DOUBLE,
-        // allowNull: false,
-        defaultValue: null
-      },
-      y: {
-        type: Sequelize.DOUBLE,
-        // allowNull: false,
-        defaultValue: null
-      },
-      coordinate_set: {
-        type: Sequelize.BOOLEAN,
-        // allowNull: false,
-        defaultValue: false
-      },
-      sensor_type: {
-        type: Sequelize.STRING
+      sensor_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false
       },
       mac_address: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
       },
-      last_transmission: {
-        type: Sequelize.STRING
+      floor_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false
       },
-      packets_sent: {
-        type: Sequelize.INTEGER
-      },
-      packets_received: {
-        type: Sequelize.INTEGER
-      },
-      floor_number: {
-        type: Sequelize.INTEGER
-      },
-      createdAt: {
+      created_at: {
         allowNull: false,
         type: Sequelize.DATE
       },
-      updatedAt: {
+      updated_at: {
         allowNull: false,
         type: Sequelize.DATE
       }
     });
-    
-    return queryInterface.addIndex('Nodes', ['coordinate_set']);
   },
   down: function(queryInterface, Sequelize) {
-    return queryInterface.dropTable('Nodes');
+    return queryInterface.dropTable('nodes');
   }
 };

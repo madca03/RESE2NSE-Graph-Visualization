@@ -1,7 +1,7 @@
 'use strict';
 module.exports = {
   up: function(queryInterface, Sequelize) {
-    return queryInterface.createTable('Floors', {
+    return queryInterface.createTable('floors', {
       floor_number: {
         allowNull: false,
         primaryKey: true,
@@ -10,17 +10,17 @@ module.exports = {
       image: {
         type: Sequelize.STRING
       },
-      createdAt: {
+      created_at: {
         allowNull: false,
         type: Sequelize.DATE
       },
-      updatedAt: {
+      updated_at: {
         allowNull: false,
         type: Sequelize.DATE
       }
     });
   },
   down: function(queryInterface, Sequelize) {
-    return queryInterface.dropTable('Floors');
+    return queryInterface.dropTable('floors');
   }
 };

@@ -1,11 +1,11 @@
 'use strict';
 module.exports = {
   up: function(queryInterface, Sequelize) {
-    queryInterface.createTable('nodes_archive', {
+    return queryInterface.createTable('nodes_present', {
       id: {
         allowNull: false,
-        primaryKey: true,
         autoIncrement: true,
+        primaryKey: true,
         type: Sequelize.INTEGER
       },
       node_id: {
@@ -13,16 +13,17 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       x_coordinate: {
-        type: Sequelize.DOUBLE,
-        defaultValue: null
+        allowNull: false,
+        type: Sequelize.DOUBLE
       },
       y_coordinate: {
-        type: Sequelize.DOUBLE,
-        defaultValue: null
+        allowNull: false,
+        type: Sequelize.DOUBLE
       },
       coordinate_set: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
+
+        type: Sequelize.BOOLEAN
       },
       last_transmission: {
         allowNull: false,
@@ -36,16 +37,13 @@ module.exports = {
         allowNull: false,
         type: Sequelize.INTEGER
       },
-      date_created_id: {
+      created_at: {
         allowNull: false,
-        type: Sequelize.INTEGER
-      },
-    }).then(function() {
-      // return a promise from the queryInterface methods
-      return queryInterface.addIndex('nodes_archive', ['node_id', 'date_created_id']);
+        type: Sequelize.DATE,
+      }
     });
   },
   down: function(queryInterface, Sequelize) {
-    return queryInterface.dropTable('nodes_archive');
+    return queryInterface.dropTable('nodes_present');
   }
 };

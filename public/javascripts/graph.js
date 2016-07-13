@@ -27,9 +27,9 @@ $(function() {
   ui.setTimeSlider();
 
   graphData.getDataForDisplay();
-  var display_timer = setInterval(function() {
-    graphData.getDataForDisplay();
-  }, UPDATERATE);
+  // var display_timer = setInterval(function() {
+  //   graphData.getDataForDisplay();
+  // }, UPDATERATE);
 
   // for (var i = 1; i <= 120; i++) {
   //     setTimeout(function() {
@@ -47,32 +47,33 @@ $(function() {
   // }, 6000);
 
   // function is called when the browser is resized
-  window.onresize = function() {
-    ui.updateUIOnBrowserResize();
-    graphData.getDataForDisplay();
 
-    clearInterval(display_timer);
-
-    display_timer = setInterval(function() {
-      graphData.getDataForDisplay();
-    }, UPDATERATE);
-  }
-
-  // add click event listener to edit graph button
-  $('.edit-btn').on('click', function() {
-    clearInterval(display_timer);
-    eventHandler.editBtnClicked($(this).data("floorNumber"));
-
-    // add event handler to cancel button
-    $('.cancel-btn').on('click', function() {
-      eventHandler.cancelBtnClicked();
-    });
-
-    // add event handler to save button
-    $('.save-btn').on('click', function() {
-      eventHandler.saveBtnClicked();
-    });
-  });
+  // window.onresize = function() {
+  //   ui.updateUIOnBrowserResize();
+  //   graphData.getDataForDisplay();
+  //
+  //   clearInterval(display_timer);
+  //
+  //   display_timer = setInterval(function() {
+  //     graphData.getDataForDisplay();
+  //   }, UPDATERATE);
+  // }
+  //
+  // // add click event listener to edit graph button
+  // $('.edit-btn').on('click', function() {
+  //   clearInterval(display_timer);
+  //   eventHandler.editBtnClicked($(this).data("floorNumber"));
+  //
+  //   // add event handler to cancel button
+  //   $('.cancel-btn').on('click', function() {
+  //     eventHandler.cancelBtnClicked();
+  //   });
+  //
+  //   // add event handler to save button
+  //   $('.save-btn').on('click', function() {
+  //     eventHandler.saveBtnClicked();
+  //   });
+  // });
 }); // end application block
 
 /***********************  END  ***********************/

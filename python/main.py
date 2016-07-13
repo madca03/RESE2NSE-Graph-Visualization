@@ -7,26 +7,26 @@ import math
 import sys
 import signal
 
-def generate_link_data(num_nodes, num_edges, time_of_archive):
+def generate_link_data(num_nodes, num_links, time_of_archive):
     data_link_archives = []
     link_count = 1
     traffic = ['heavy', 'moderate', 'light']
     num_floors = 4
 
     for floor_number in range(num_floors):
-        for i in range(num_edges):
-            edge_id = 'e{0}'.format((link_count))
+        for i in range(num_links):
+            link_id = 'e{0}'.format((link_count))
             traffic_index = math.floor(random() * len(traffic))
 
             while True:
-                source = 'n{0}'.format((math.floor(random() * num_nodes + 1)) + (floor_number * num_nodes))
-                target = 'n{0}'.format((math.floor(random() * num_nodes + 1)) + (floor_number * num_nodes))
+                source = 'n{0}'.format(int(math.floor(random() * num_nodes + 1)) + (floor_number * num_nodes))
+                target = 'n{0}'.format(int(math.floor(random() * num_nodes + 1)) + (floor_number * num_nodes))
 
                 if source != target:
                     break
 
             data_link_archive = {
-                'edge_id': edge_id,
+                'link_id': link_id,
                 'source': source,
                 'target': target,
                 'traffic': traffic[traffic_index],
@@ -48,9 +48,9 @@ def generate_sql_insert_links(table_name, data_links):
     for new_link in data_links:
         insert_header = "INSERT INTO {} ".format(table_name)
         insert_body = (""
-            "(edge_id, source, target, traffic, floor_number, createdAt, "
+            "(link_id, source, target, traffic, floor_number, createdAt, "
             "updatedAt) "
-            "VALUES (%(edge_id)s, %(source)s, %(target)s, %(traffic)s, "
+            "VALUES (%(link_id)s, %(source)s, %(target)s, %(traffic)s, "
             "%(floor_number)s, %(createdAt)s, %(updatedAt)s)")
 
         insert_link_statement = insert_header + insert_body
@@ -78,23 +78,24 @@ db_client.start_connection()
 db_client.use_database('graph')
 
 num_nodes = int(db_client.getNodeCountPerFloor())
-num_edges = int(db_client.getEdgeCountPerFloor())
+num_links = int(db_client.getLinkCountPerFloor())
 sleep_time = 2
 tag = "main"
 
-while True:
-    log.d(tag, "Archiving nodes and adding new edges")
-    time_of_archive = db_client.create_node_archive()
+# while True:
+print("Archiving nodes and adding new links")
+db_client.create_node_archive()
+db_client.create_link_archive()
+db_client.commit()
 
-    data_links = generate_link_data(num_nodes, num_edges, time_of_archive)
-    links_for_archive = generate_sql_insert_links('Edge_archives', data_links)
-    db_client.insert_link_archive_data(links_for_archive)
+# data_links = generate_link_data(num_nodes, num_links, time_of_archive_id)
+# links_for_archive = generate_sql_insert_links('Link_archives', data_links)
+# db_client.insert_link_archive_data(links_for_archive)
+#
+# links_for_display = generate_sql_insert_links('Links', data_links)
+# db_client.update_links(links_for_display)
 
-    links_for_display = generate_sql_insert_links('Edges', data_links)
-    db_client.update_links(links_for_display)
-    db_client.commit()
-
-    log.d(tag, "Archive done")
-
-    # pause for T seconds
-    sleep(sleep_time)
+#     log.d(tag, "Archive done")
+#
+#     # pause for T seconds
+#     sleep(sleep_time)

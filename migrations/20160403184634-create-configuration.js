@@ -1,7 +1,7 @@
 'use strict';
 module.exports = {
   up: function(queryInterface, Sequelize) {
-    return queryInterface.createTable('Configurations', {
+    return queryInterface.createTable('configurations', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -14,17 +14,17 @@ module.exports = {
       base_graph_container_width: {
         type: Sequelize.DOUBLE
       },
-      createdAt: {
+      created_at: {
         allowNull: false,
         type: Sequelize.DATE
       },
-      updatedAt: {
+      updated_at: {
         allowNull: false,
         type: Sequelize.DATE
       }
     });
   },
   down: function(queryInterface, Sequelize) {
-    return queryInterface.dropTable('Configurations');
+    return queryInterface.dropTable('configurations');
   }
 };
