@@ -1,6 +1,6 @@
-from dbClient import dbClient
-from dbArchive import archiveManager
-from dbTable import tableManager
+from db.dbClient import dbClient
+from db.dbArchive import archiveManager
+from db.dbTable import tableManager
 from time import sleep
 import sys
 import signal
