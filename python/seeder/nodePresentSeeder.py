@@ -4,9 +4,9 @@ import string
 import mysql.connector
 
 class nodePresentSeeder:
-    def __init__(self, cursor, node_count_per_floor, floor_count):
-
-        self._cursor = cursor
+    def __init__(self, db_client, node_count_per_floor, floor_count):
+        self.db_client = db_client
+        self.cursor = db_client.cursor
         self._node_count_per_floor = node_count_per_floor
         self._floor_count = floor_count
         self.created_at = datetime.utcnow()
@@ -16,6 +16,7 @@ class nodePresentSeeder:
 
     def seed(self):
         node_count = 1
+
         for j in range(self._floor_count):
             for i in range(self._node_count_per_floor):
                 insert_statement = (""
@@ -42,7 +43,9 @@ class nodePresentSeeder:
                 node_count += 1
 
                 try:
-                    self._cursor.execute(insert_statement, data)
+                    self.cursor.execute(insert_statement, data)
                 except mysql.connector.Error as err:
                     print("Error: {}".format(err))
                     exit(1)
+
+        self.db_client.commit()

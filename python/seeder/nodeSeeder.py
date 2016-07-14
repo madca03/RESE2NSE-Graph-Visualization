@@ -4,11 +4,11 @@ import string
 import mysql.connector
 
 class nodeSeeder:
-    def __init__(self, cursor, node_count_per_floor, floor_count):
+    def __init__(self, db_client, node_count_per_floor, floor_count):
         """ Constructor
         """
-
-        self._cursor = cursor
+        self.db_client = db_client
+        self.cursor = db_client.cursor
         self._node_count_per_floor = node_count_per_floor
         self._floor_count = floor_count
         self._table_name = 'nodes'
@@ -41,7 +41,9 @@ class nodeSeeder:
                 node_count += 1
 
                 try:
-                    self._cursor.execute(insert_statement, data)
+                    self.cursor.execute(insert_statement, data)
                 except mysql.connector.Error as err:
                     print("Error: {}".format(err))
                     exit(1)
+
+        self.db_client.commit()

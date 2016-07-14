@@ -2,9 +2,9 @@ from datetime import datetime
 import mysql.connector
 
 class floorSeeder:
-    def __init__(self, cursor, floor_count):
-
-        self._cursor = cursor
+    def __init__(self, db_client, floor_count):
+        self.db_client = db_client
+        self.cursor = db_client.cursor
         self._floor_count = floor_count
 
     def seed(self):
@@ -23,7 +23,9 @@ class floorSeeder:
             }
 
             try:
-                self._cursor.execute(insert_statement, data)
+                self.cursor.execute(insert_statement, data)
             except mysql.connector.Error as err:
                 print("Error: {}".format(err))
                 exit(1)
+
+        self.db_client.commit()

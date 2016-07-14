@@ -3,10 +3,10 @@ import mysql.connector
 import random
 
 class linkPresentSeeder:
-    def __init__(self, cursor, link_count_per_floor, node_count_per_floor, floor_count, traffic_count,
+    def __init__(self, db_client, link_count_per_floor, node_count_per_floor, floor_count, traffic_count,
         created_at):
-
-        self._cursor = cursor
+        self.db_client = db_client
+        self.cursor = db_client.cursor
         self._link_count_per_floor = link_count_per_floor
         self._node_count_per_floor = node_count_per_floor
         self._floor_count = floor_count
@@ -48,7 +48,9 @@ class linkPresentSeeder:
                 link_count += 1
 
                 try:
-                    self._cursor.execute(insert_statement, data)
+                    self.cursor.execute(insert_statement, data)
                 except mysql.connector.Error as err:
                     print("Error: {}".format(err))
                     exit(1)
+
+        self.db_client.commit()

@@ -1,9 +1,9 @@
 import mysql.connector
 
 class sensorSeeder:
-    def __init__(self, cursor, sensors):
-
-        self._cursor = cursor
+    def __init__(self, db_client, sensors):
+        self.db_client = db_client
+        self.cursor = db_client.cursor
         self._sensors = sensors
 
     def seed(self):
@@ -19,7 +19,9 @@ class sensorSeeder:
             }
 
             try:
-                self._cursor.execute(insert_statement, data)
+                self.cursor.execute(insert_statement, data)
             except mysql.connector.Error as err:
                 print("Error: {}".format(err))
                 exit(1)
+
+        self.db_client.commit()
