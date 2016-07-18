@@ -456,7 +456,34 @@ SingleGraphDrawer.prototype.addClickEventToCircle = function(nodeCircle) {
   nodeCircle.on("click", function() {
     var nodeID = this.__data__.id;
 
-    window.open(BASEURL + "/node/" + nodeID, "_blank");
+    var request = $.ajax({
+      url: BASEURL + '/nodes/' + nodeID,
+      type: 'GET',
+      dataType: 'json',
+      context: this
+    });
+
+    request.done(function(_data, textStatus, jqXHR) {
+      console.log(_data);
+      var url = BASEURL + '/node_display?'
+      var node = _data.data;
+      var node_properties = Object.keys(node);
+
+      for (var i = 0; i < node_properties.length; i++) {
+          var property = node_properties[i];
+
+          if (node.hasOwnProperty(property)) {
+            url += (property + '=' + node[property]);
+          }
+
+          if (i != node_properties.length - 1) url += '&';
+        }
+      console.log(url);
+
+      window.open(url, "_blank");
+    });
+
+
   });
   nodeCircle.attr("cursor", "pointer");
 }

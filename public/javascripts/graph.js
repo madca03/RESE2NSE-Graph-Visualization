@@ -28,7 +28,7 @@ $(function() {
 
   graphDataFetcher.getDataForDisplay();
   var display_timer = setInterval(function() {
-    graphDataFetcher.getDataForDisplay();
+    // graphDataFetcher.getDataForDisplay();
   }, UPDATERATE);
 
   // for (var i = 1; i <= 120; i++) {
@@ -49,7 +49,7 @@ $(function() {
     clearInterval(display_timer);
 
     display_timer = setInterval(function() {
-      graphDataFetcher.getDataForDisplay();
+      // graphDataFetcher.getDataForDisplay();
     }, UPDATERATE);
   }
   //
