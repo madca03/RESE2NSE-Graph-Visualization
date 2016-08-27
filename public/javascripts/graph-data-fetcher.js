@@ -37,6 +37,7 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
     this.getGraphPerFloor(_data.data.graph);
 
     // draw all of the graphs
+    // graphDrawer is of type MultiGraphDrawer
     this.graphDrawer.drawGraphsForDisplay(this.floors);
 
     // update the maximum value of the slider to the total archive count
@@ -51,6 +52,11 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
   });
 }
 
+/**
+  * This method gets the nodes associated with a certain floorNumber via AJAX.
+  *
+  * @param {integer} floorNumber: the id of the floor to be edited
+  */
 GraphDataFetcher.prototype.getDataForEdit = function(floorNumber) {
   // ajax call to get graph data
   var request = $.ajax({
@@ -61,11 +67,14 @@ GraphDataFetcher.prototype.getDataForEdit = function(floorNumber) {
   });
 
   request.done(function(_data, textStatus, jqXHR) {
+    var nodes = _data.data.graph.nodes;
 
-    var links = this.modifyLinks(_data.data.graph.nodes, _data.data.graph.links);
-    var nodes = this.modifyNodesForEdit(_data.data.graph.nodes);
-
-    var floor_for_edit = new Floor(floorNumber, nodes, links);
+    /* third argument of Floor constructor is for the array of links. But
+      since the admin user is only concerned in the editing of the position
+      of the nodes, the present links doesn't matter. That's why we just pass
+      null for the links array in the Floor constructor.
+    */
+    var floor_for_edit = new Floor(floorNumber, nodes, null);
 
     this.graphDrawer = new SingleGraphDrawer(floor_for_edit);
     this.graphDrawer.drawGraphForEdit();
@@ -75,7 +84,6 @@ GraphDataFetcher.prototype.getDataForEdit = function(floorNumber) {
     console.log(textStatus, errorThrown);
   });
 }
-
 
 /**
  * This method sorts the graph data per floor from the given data
@@ -190,19 +198,6 @@ GraphDataFetcher.prototype.modifyLinks = function(nodes, links) {
   }
 
   return modifiedLinks;
-}
-
-GraphDataFetcher.prototype.modifyNodesForEdit = function(nodes) {
-  var modifiedNodes = [];
-  nodes.forEach(function(node) {
-    if (node.x_coordinate !== null) {
-      node.x = node.x_coordinate;
-      node.y = node.y_coordinate;
-    }
-    modifiedNodes.push(node);
-  });
-
-  return modifiedNodes;
 }
 
 /**

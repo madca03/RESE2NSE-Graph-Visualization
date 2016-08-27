@@ -1,4 +1,20 @@
 {
+  "development_postgres": {
+    "username": "rese2nse",
+    "password": "rese2nse",
+    "database": "graph",
+    "host": "localhost",
+    "port": "5432",
+    "dialect": "postgres"
+  },
+  "development_mysql": {
+    "username": "rese2nse",
+    "password": "rese2nse",
+    "database": "graph",
+    "host": "localhost",
+    "port": "3306",
+    "dialect": "mysql"
+  },
   "development": {
     "username": "rese2nse",
     "password": "rese2nse",

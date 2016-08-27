@@ -14,11 +14,11 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/graph', function(req, res, next) {
-  var query = "SELECT COUNT(*) FROM floors";
+  var query = "SELECT COUNT(*) AS floor_count FROM floors";
 
   models.sequelize.query(query, {type: models.sequelize.QueryTypes.SELECT })
     .then(function(count) {
-      var floorCount = count[0]["COUNT(*)"];
+      var floorCount = count[0]["floor_count"];
 
       res.render('graph', {floorCount: floorCount})
     });

@@ -99,29 +99,44 @@ UI.prototype.setTimeSlider = function() {
   });
 }
 
+/**
+ * This function sets the dimensions of the floor image to match
+ * the width and height dimensions of its parent element, .graph-container
+ */
+
 UI.prototype.setFloorImageDimensions = function() {
   // SVG stage and floorplan image properties
-  var graph_container = document.getElementsByClassName('graph-container');
-  var graph_container_style = window.getComputedStyle(graph_container[0]);
-  var floor_img = document.getElementsByClassName('floor-img');
-  var floor_img_style = window.getComputedStyle(floor_img[0]);
-  var img_border = parseFloat(floor_img_style.getPropertyValue('border-top-width'));
-  var container_width = parseFloat(graph_container_style.getPropertyValue('width'));
-  var container_height = parseFloat(graph_container_style.getPropertyValue('height'));
+  var graph_container = $(".graph-container");
+  var floor_img = $(".floor-img");
+  var img_border = parseFloat($(floor_img).css('border-top-width'));
+  var container_width = parseFloat($(graph_container).css('width'));
+  var container_height = parseFloat($(graph_container).css('height'));
 
   this.svgWidth = container_width - img_border;
   this.svgHeight = container_height - img_border;
 
-  for (var i = 0; i < floor_img.length; i++) {
-    floor_img[i].style.width = this.svgWidth.toString() + 'px';
-    floor_img[i].style.height = this.svgHeight.toString() + 'px';
-  }
+  $(floor_img).css("width", this.svgWidth.toString() + 'px');
+  $(floor_img).css("height", this.svgHeight.toString() + 'px');
 }
 
+/**
+  * This function adds a scroll effect when a link on the side navbar is
+  * clicked to go to a certain floor graph.
+  */
 UI.prototype.setScrollToLink = function() {
   $('.floor-link').on('click', function() {
     var link = '#floor' + this.dataset.floorNumber.toString();
     var top_offset = $('.main-nav').outerHeight(); // offset covered by navbar
+
+    /* $(jquery-obj).offset() -> returns the current coordinates of an element
+      relative to the document
+
+      Since the navbar is fixed on top of the browser while scrolling, we need
+      to subtract the height of the navbar to the offset.top coordinate of the
+      floor to be viewed. This makes the offset.top coordinate now relative
+      to the bottom part of the navbar and not the top part of the browser
+      window.
+    */
 
     $('html, body').animate({
       scrollTop: $(link).offset().top - top_offset

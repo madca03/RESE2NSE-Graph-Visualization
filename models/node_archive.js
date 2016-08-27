@@ -17,11 +17,6 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DOUBLE,
       defaultValue: null
     },
-    coordinate_set: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: false
-    },
     sensor_type: {
       type: DataTypes.STRING
     },

@@ -22,7 +22,7 @@ module.exports =  function(req, res, next) {
       + 'ON (nodes.id = nodes_present.node_id) '
     + 'INNER JOIN sensors '
       + 'ON (nodes.sensor_id = sensors.id) '
-    + 'WHERE nodes_present.coordinate_set = true;';
+    + 'WHERE nodes.coordinate_set = true;';
 
   var link_query = ''
     + 'SELECT '
@@ -35,9 +35,9 @@ module.exports =  function(req, res, next) {
     + 'INNER JOIN traffic '
       + 'ON (links_present.traffic_id = traffic.id) '
     + 'WHERE links_present.source_id '
-      + 'IN (SELECT node_id FROM nodes_present WHERE coordinate_set = true) '
+      + 'IN (SELECT id FROM nodes WHERE coordinate_set = true) '
     + 'AND links_present.target_id '
-      + 'IN (SELECT node_id FROM nodes_present WHERE coordinate_set = true);';
+      + 'IN (SELECT id FROM nodes WHERE coordinate_set = true);';
 
   // var archive_date_query = 'SELECT CONVERT_TZ(datetime_archive, "+00:00", "+08:00") '
   //   + 'AS datetime_archive FROM Datetime_archives ORDER BY id ASC;';

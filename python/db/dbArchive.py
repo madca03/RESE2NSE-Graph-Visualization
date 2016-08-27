@@ -1,14 +1,25 @@
 class archiveManager:
     def __init__(self, db_client):
         self.db_client = db_client
+        self.cursor = db_client.cursor
         self._database_tables = {'nodes_archive': nodeArchiver(self.db_client),
                                 'links_archive': linkArchiver(self.db_client),
                                 'datetime_archive': datetimeArchiver(self.db_client)}
 
     def archive_database(self):
-        self._archive('datetime_archive')
-        self._archive('nodes_archive')
-        self._archive('links_archive')
+        if self.has_nodes_for_display():
+            self._archive('datetime_archive')
+            self._archive('nodes_archive')
+            self._archive('links_archive')
+
+    def has_nodes_for_display(self):
+        query = (""
+            "SELECT COUNT(coordinate_set) AS node_count "
+            "FROM nodes WHERE coordinate_set = true;")
+
+        self.cursor.execute(query)
+        (node_count,) = self.cursor.fetchone()
+        return (node_count > 0)
 
     def _archive(self, table):
         if table in self._database_tables:
@@ -26,6 +37,10 @@ class archiver:
 
 class datetimeArchiver(archiver):
     def _new_datetime_archive_id(self):
+        """This method gets the next available id for a new data row in
+            datetime_archive table.
+        """
+
         query = "SELECT MAX(id) FROM datetime_archive;"
 
         self.cursor.execute(query)
@@ -105,9 +120,17 @@ class nodeArchiver(archiver):
 
         """
 
-        query = ("SELECT node_id, x_coordinate, y_coordinate, coordinate_set, "
-            "last_transmission, packets_sent, "
-            "packets_received FROM nodes_present;")
+        query = ("SELECT "
+            "nodes_present.node_id, "
+            "nodes_present.x_coordinate, "
+            "nodes_present.y_coordinate, "
+            "nodes.coordinate_set, "
+            "nodes_present.last_transmission, "
+            "nodes_present.packets_sent, "
+            "nodes_present.packets_received "
+            "FROM nodes_present "
+            "INNER JOIN nodes "
+            "ON (nodes.id = nodes_present.node_id);")
 
         self.cursor.execute(query)
 
@@ -128,45 +151,54 @@ class nodeArchiver(archiver):
         # After executing the query, the cursor object will contain a list
         # of tuples and each tuple represents a row in the result set
 
-        for (node_id, x_coordinate, y_coordinate, coordinate_set,
-            last_transmission, packets_sent, packets_received,) in rows:
+        for (node_id,
+            x_coordinate,
+            y_coordinate,
+            coordinate_set,
+            last_transmission,
+            packets_sent,
+            packets_received,) in rows:
 
-            insert_statement = (""
-                "INSERT INTO nodes_archive "
-                "(id, node_id, x_coordinate, y_coordinate, coordinate_set, "
-                "last_transmission, packets_sent, "
-                "packets_received, date_created_id) "
-                "VALUES ("
-                "%(id)s, "
-                "%(node_id)s, "
-                "%(x_coordinate)s, "
-                "%(y_coordinate)s, "
-                "%(coordinate_set)s, "
-                "%(last_transmission)s, "
-                "%(packets_sent)s, "
-                "%(packets_received)s, "
-                "%(date_created_id)s);")
+            # archive only those nodes that have been already set in a location
+            if coordinate_set == True:
 
-            data = {
-                'id': nodes_archive_id,
-                'node_id': node_id,
-                'x_coordinate': x_coordinate,
-                'y_coordinate': y_coordinate,
-                'coordinate_set': coordinate_set,
-                'last_transmission': last_transmission,
-                'packets_sent': packets_sent,
-                'packets_received': packets_received,
-                'date_created_id': date_created_id,
-            }
+                insert_statement = (""
+                    "INSERT INTO nodes_archive "
+                    "(id, node_id, x_coordinate, y_coordinate, "
+                    "last_transmission, packets_sent, "
+                    "packets_received, date_created_id) "
+                    "VALUES ("
+                    "%(id)s, "
+                    "%(node_id)s, "
+                    "%(x_coordinate)s, "
+                    "%(y_coordinate)s, "
+                    "%(last_transmission)s, "
+                    "%(packets_sent)s, "
+                    "%(packets_received)s, "
+                    "%(date_created_id)s);")
 
-            nodes_archive_id += 1
+                data = {
+                    'id': nodes_archive_id,
+                    'node_id': node_id,
+                    'x_coordinate': x_coordinate,
+                    'y_coordinate': y_coordinate,
+                    'last_transmission': last_transmission,
+                    'packets_sent': packets_sent,
+                    'packets_received': packets_received,
+                    'date_created_id': date_created_id,
+                }
 
-            self.cursor.execute(insert_statement, data)
+                nodes_archive_id += 1
+
+                self.cursor.execute(insert_statement, data)
 
         self.db_client.commit()
 
 class linkArchiver(archiver):
     def links_creation_date(self):
+        """This method returns the datetime when the links in the links_present
+        table were created.
+        """
         query = "SELECT DISTINCT(created_at) FROM links_present LIMIT 1;"
 
         self.cursor.execute(query);
@@ -175,6 +207,10 @@ class linkArchiver(archiver):
         return created_at
 
     def datetime_archive_id(self):
+        """This method returns the datetime_archive id of the datetime
+        corresponding to the creation date of the links in the links_present
+        table.
+        """
         query = (""
             "SELECT id FROM datetime_archive "
             "WHERE datetime_archive = '{}';").format(self.links_creation_date())
@@ -202,9 +238,21 @@ class linkArchiver(archiver):
             return last_row_id + 1
 
     def query_links_present(self):
+        """This method queries data from the links_present table. The data
+        to be returned are the links that have their source node and
+        target node fixed in location.
+        """
         query = (""
-            "SELECT id, source_id, target_id, traffic_id, floor_id "
-            "FROM links_present;")
+            "SELECT id, "
+            "source_id, "
+            "target_id, "
+            "traffic_id, "
+            "floor_id "
+            "FROM links_present "
+            "WHERE source_id "
+            "IN (SELECT id FROM nodes WHERE coordinate_set = true) "
+            "AND target_id "
+            "IN (SELECT id FROM nodes WHERE coordinate_set = true);")
 
         self.cursor.execute(query)
 

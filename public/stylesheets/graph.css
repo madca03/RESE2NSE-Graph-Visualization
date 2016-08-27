@@ -248,6 +248,8 @@ body {
   z-index: 1;
   border: solid 4px #FEFEFE;
   box-shadow: 0 0 2px 1px rgba(10,10,10,0.1);
+  width: 866px;
+  height: 396px;
 }
 
 svg {

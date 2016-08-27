@@ -2,6 +2,11 @@
 
 function EventHandler() {}
 
+/**
+  * This function sets up the view for editing a specific floor.
+  * It then calls the graphDataFetcher.getDataForEdit() function to get
+  * the nodes corresponding to the floor to be edited.
+  */
 EventHandler.prototype.editBtnClicked = function(floorNumber) {
   // remove the edit button and replace it with a save
   // button and cancel button
@@ -28,14 +33,21 @@ EventHandler.prototype.editBtnClicked = function(floorNumber) {
 }
 
 EventHandler.prototype.getUpdatedNodes = function() {
-  // graphDataFetcher.graphDrawer property is of type SingleGraphDrawer
+  /* graphDataFetcher.graphDrawer property is of type SingleGraphDrawer
+    When the edit button is clicked, the graphDrawer is set to draw
+    a single graph for the floor selected. This graphDrawer object of type
+    SingleGraphDrawer also contains the information about the nodes.
+  */
   var nodes = graphDataFetcher.graphDrawer.nodes;
   var modifiedNodes = [];
 
-  /* the properties node.x and node.y comes from the force layout of d3js */
+  /* The properties node.x and node.y come from the force layout of d3js.
+    The "moved" property is set to true in the dragstart function of d3js
+    if a node is dragged.
+  */
 
   for (var i = 0; i < nodes.length; i++) {
-    if (nodes[i].fixed == true) {
+    if (typeof(nodes[i].moved) !== 'undefined' && nodes[i].moved == true) {
       modifiedNodes.push({
         'id': nodes[i].id,
         'x_coordinate': nodes[i].x,
@@ -71,8 +83,16 @@ EventHandler.prototype.saveBtnClicked = function() {
   if (updatedNodes.length !== 0) {
     this.updateNodes(updatedNodes);
   }
+  // if there are no modified nodes but the user still clicks the save-btn
+  // then just reload the page.
+  else {
+    location.reload();
+  }
 }
 
+/**
+  * This function creates a new floor container for the floor to be edited.
+  */
 EventHandler.prototype.newFloorLabel = function(floorNumber) {
   // create the new floor label div with corresponding floor number
   var newFloorLabel = ''

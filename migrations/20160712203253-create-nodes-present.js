@@ -20,11 +20,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DOUBLE
       },
-      coordinate_set: {
-        defaultValue: false,
-
-        type: Sequelize.BOOLEAN
-      },
       last_transmission: {
         allowNull: false,
         type: Sequelize.STRING

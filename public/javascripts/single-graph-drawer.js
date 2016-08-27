@@ -136,6 +136,9 @@ SingleGraphDrawer.prototype.getNodeDragBehavior = function() {
   var force = this.force;
   var tick = this.getTick();
 
+  console.log(this.nodes);
+  var nodes = this.nodes;
+
   var nodeDrag = d3.behavior.drag()
     .on("dragstart", dragstart)
     .on("drag", dragmove)
@@ -149,6 +152,12 @@ SingleGraphDrawer.prototype.getNodeDragBehavior = function() {
   */
   function dragstart(d, i) {
     force.stop(); // stops the force auto positioning before you start dragging
+
+    /* set the "moved" property of the node object to true when a node is dragged
+     this will be used as the condition whether the node should be sent back
+     to the server for database update.
+    */
+    d.moved = true;
   }
 
   /* arguments: d = node object,
@@ -464,7 +473,6 @@ SingleGraphDrawer.prototype.addClickEventToCircle = function(nodeCircle) {
     });
 
     request.done(function(_data, textStatus, jqXHR) {
-      console.log(_data);
       var url = BASEURL + '/node_display?'
       var node = _data.data;
       var node_properties = Object.keys(node);
@@ -478,7 +486,6 @@ SingleGraphDrawer.prototype.addClickEventToCircle = function(nodeCircle) {
 
           if (i != node_properties.length - 1) url += '&';
         }
-      console.log(url);
 
       window.open(url, "_blank");
     });

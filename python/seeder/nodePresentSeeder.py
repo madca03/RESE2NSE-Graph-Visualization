@@ -21,19 +21,28 @@ class nodePresentSeeder:
             for i in range(self._node_count_per_floor):
                 insert_statement = (""
                     "INSERT INTO nodes_present "
-                    "(id, node_id, x_coordinate, y_coordinate, coordinate_set, "
-                    "last_transmission, packets_sent, packets_received, "
+                    "(id, "
+                    "node_id, "
+                    "x_coordinate, "
+                    "y_coordinate, "
+                    "last_transmission, "
+                    "packets_sent, "
+                    "packets_received, "
                     "created_at) "
-                    "VALUES (%(id)s, %(node_id)s, %(x_coordinate)s, %(y_coordinate)s, "
-                    "%(coordinate_set)s, %(last_transmission)s, %(packets_sent)s, "
-                    "%(packets_received)s, %(created_at)s);")
+                    "VALUES (%(id)s, "
+                    "%(node_id)s, "
+                    "%(x_coordinate)s, "
+                    "%(y_coordinate)s, "
+                    "%(last_transmission)s, "
+                    "%(packets_sent)s, "
+                    "%(packets_received)s, "
+                    "%(created_at)s);")
 
                 data = {
                     'id': node_count,
                     'node_id': node_count,
                     'x_coordinate': 0,
                     'y_coordinate': 0,
-                    'coordinate_set': False,
                     'last_transmission': self.random_word(),
                     'packets_sent': random.randint(1,1000),
                     'packets_received': random.randint(1,1000),

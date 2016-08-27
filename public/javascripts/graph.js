@@ -9,7 +9,7 @@ const NODEFILL = "black";
 // link visual properties
 const LINKSTROKEOPACITY = '1';
 const LINKSTROKEWIDTH = '2px';
-const UPDATERATE = 1000;
+const UPDATERATE = 200;
 
 /*************  Application starts here  *************/
 
@@ -28,7 +28,7 @@ $(function() {
 
   graphDataFetcher.getDataForDisplay();
   var display_timer = setInterval(function() {
-    // graphDataFetcher.getDataForDisplay();
+    graphDataFetcher.getDataForDisplay();
   }, UPDATERATE);
 
   // for (var i = 1; i <= 120; i++) {
@@ -38,21 +38,23 @@ $(function() {
   // }
 
   // setTimeout(function() {
-  //   graphData.getDataForDisplay();
-  // }, 1000);
+  //   graphDataFetcher.getDataForDisplay();
+  // }, 10000);
 
   // function is called when the browser is resized
   window.onresize = function() {
     ui.updateUIOnBrowserResize();
     graphDataFetcher.getDataForDisplay();
 
+    console.log("browser resize");
     clearInterval(display_timer);
 
     display_timer = setInterval(function() {
-      // graphDataFetcher.getDataForDisplay();
+      graphDataFetcher.getDataForDisplay();
     }, UPDATERATE);
   }
-  //
+
+
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
     clearInterval(display_timer);
