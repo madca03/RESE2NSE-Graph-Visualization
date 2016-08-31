@@ -3,7 +3,7 @@ var router = express.Router();
 var models = require('../../models/index');
 
 router.get('/nodes/display', require('./floor-display.js'));
-router.get('/floor/:floor_number', require('./nodes-edit.js'));
+router.get('/nodes/edit', require('./nodes-edit.js'));
 router.post('/nodes/update', require('./nodes-update.js'));
 router.get('/archive/floor/:floor_number/date/:date_created_id', require('./floor-archive.js'));
 router.get('/nodes/:node_id', require('./node-display.js'));

@@ -45,7 +45,8 @@ class nodeSeeder:
                     'label': 'Node ' + str(node_count),
                     'sensor_id': random.randint(1,4),
                     'mac_address': self.random_mac_address(),
-                    'floor_id': j + 1,
+                    # 'floor_id': j + 1,
+                    'floor_id': 1,
                     'coordinate_set': False,
                     'created_at': datetime.utcnow(),
                     'updated_at': datetime.utcnow()

@@ -9,7 +9,7 @@ const NODEFILL = "black";
 // link visual properties
 const LINKSTROKEOPACITY = '1';
 const LINKSTROKEWIDTH = '2px';
-const UPDATERATE = 200;
+const UPDATERATE = 1000;
 
 /*************  Application starts here  *************/
 
@@ -27,9 +27,9 @@ $(function() {
   ui.setTimeSlider();
 
   graphDataFetcher.getDataForDisplay();
-  var display_timer = setInterval(function() {
-    graphDataFetcher.getDataForDisplay();
-  }, UPDATERATE);
+  // var display_timer = setInterval(function() {
+  //   graphDataFetcher.getDataForDisplay();
+  // }, UPDATERATE);
 
   // for (var i = 1; i <= 120; i++) {
   //     setTimeout(function() {
@@ -42,23 +42,24 @@ $(function() {
   // }, 10000);
 
   // function is called when the browser is resized
-  window.onresize = function() {
-    ui.updateUIOnBrowserResize();
-    graphDataFetcher.getDataForDisplay();
 
-    console.log("browser resize");
-    clearInterval(display_timer);
-
-    display_timer = setInterval(function() {
-      graphDataFetcher.getDataForDisplay();
-    }, UPDATERATE);
-  }
+  // window.onresize = function() {
+  //   ui.updateUIOnBrowserResize();
+  //   graphDataFetcher.getDataForDisplay();
+  //
+  //   console.log("browser resize");
+  //   clearInterval(display_timer);
+  //
+  //   display_timer = setInterval(function() {
+  //     graphDataFetcher.getDataForDisplay();
+  //   }, UPDATERATE);
+  // }
 
 
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
-    clearInterval(display_timer);
-    eventHandler.editBtnClicked($(this).data("floorNumber"));
+    // clearInterval(display_timer);
+    eventHandler.editBtnClicked();
 
     // add event handler to cancel button
     $('.cancel-btn').on('click', function() {

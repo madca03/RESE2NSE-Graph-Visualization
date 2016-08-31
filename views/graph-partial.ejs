@@ -1,0 +1,27 @@
+<% for (var i = 0; i < floorCount; i++) { %>
+  <% var floorID = "floor" + (i + 1) %>
+  <% var floorNumber = i + 1 %>
+  <% var imageID = "floor" + (i + 1) + "-img" %>
+  <% var sliderID = "slider-range-" + (i + 1) %>
+
+  <div class="floor" id="<%= floorID %>">
+    <div class="floor-label">
+      <span>Floor <%= floorNumber %></span>
+      <button type="button" class="success button edit-btn" data-floor-number=<%= floorNumber %>>Edit Graph</button>
+    </div> <!-- end .floor-label -->
+    <div class="floor-graph">
+      <div class='graph-container'>
+        <img src='/images/floorplan7.jpg' class="floor-img" id="<%= imageID %>">
+      </div> <!-- end .graph-container -->
+
+      <div class="slider-container">
+        <div class="slider-label">
+          <span>Time: </span>
+          <span class="slider-time" id="slider-time-<%= (i + 1) %>"></span>
+        </div> <!-- end .slider-label -->
+        <div class="slider-range" id="<%= sliderID %>" data-floor-number=<%= floorNumber %>></div>
+      </div> <!-- end .slider-container -->
+    </div> <!-- end .floor-graph -->
+  </div> <!-- end .floor#floor_ -->
+
+<% } %>

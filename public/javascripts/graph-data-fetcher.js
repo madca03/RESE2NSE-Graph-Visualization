@@ -3,8 +3,11 @@
 function GraphDataFetcher(floorCount, floors) {
   this.floorCount = floorCount;
   this.floors = floors;
-  this.graphDrawer = new MultiGraphDrawer();
+  this.graphDrawer = null;
   this.initialDataFetch = true;
+
+  // temporarily place the attribute from MultiGraphDrawer here
+  this.graphDisplayed = false;
 }
 
 /**
@@ -33,17 +36,40 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
   });
 
   request.done(function(_data, textStatus, jqXHR) {
-    // separate the graph data per floor
-    this.getGraphPerFloor(_data.data.graph);
+    // if (_data.data.date_archive_count > 0) {
+    // }
 
-    // draw all of the graphs
-    // graphDrawer is of type MultiGraphDrawer
-    this.graphDrawer.drawGraphsForDisplay(this.floors);
+    this.modifyNodesForDisplay(_data.data.graph.nodes);
+    this.modifyLinks(_data.data.graph);
 
-    // update the maximum value of the slider to the total archive count
+    this.graphDrawer = new GraphDrawer();
+    this.graphDrawer.setGraph(_data.data.graph);
+    this.graphDrawer.drawGraphDisplay();
+    // if (this.graphDisplayed) {
+    //   this.graphDrawer.updateGraphDisplay();
+    // } else {  // if it's the first time to display the graph
+    //   this.graphDrawer.drawGraphDisplay();
+    //   this.graphDisplayed = true;
+    // }
+
+
+    // this.floors.push(new Floor(1, _data.data.graph.nodes, links));
+    // console.log(this.floors);
+
+
+
+
+    // // separate the graph data per floor
+    // this.getGraphPerFloor(_data.data.graph);
+    //
+    // // draw all of the graphs
+    // // graphDrawer is of type MultiGraphDrawer
+    // this.graphDrawer.drawGraphsForDisplay(this.floors);
+    //
+    // // update the maximum value of the slider to the total archive count
     ui.updateSliderRange(_data.data.date_archive_count);
-
-    // update the array of archive dates stores in the UI object
+    //
+    // // update the array of archive dates stores in the UI object
     ui.updateArchiveDate(_data.data.date_archive);
   });
 
@@ -53,30 +79,93 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
 }
 
 /**
-  * This method gets the nodes associated with a certain floorNumber via AJAX.
+  * The link objects' source and target attributes are currently set to the
+  * "node_id" of the source and target nodes. Using these node_ids, the source
+  * and target attributes of each link object will be change to point to the
+  * corresponding node objects from the @param {array} nodes.
   *
-  * @param {integer} floorNumber: the id of the floor to be edited
+  * @param {array} nodes - array of node objects on a given floor
+  * @param {array} links - array of link objects on a given floor.
+  * @return {array} modifiedLinks
   */
-GraphDataFetcher.prototype.getDataForEdit = function(floorNumber) {
+GraphDataFetcher.prototype.modifyLinks = function(graph) {
+  var modifiedLinks = [];
+  var links = graph.links;
+  var nodes = graph.nodes
+
+  for (var i = 0; i < links.length; i++) {
+    var sourceNode = null;
+    var targetNode = null;
+
+    for (var j = 0; j < nodes.length; j++) {
+      if (nodes[j].id === links[i].source_id) {
+        sourceNode = nodes[j];
+      } else if (nodes[j].id === links[i].target_id) {
+        targetNode = nodes[j];
+      }
+
+      if (sourceNode !== null && targetNode !== null) {
+        break;
+      }
+    }
+
+    modifiedLinks.push({
+      source: sourceNode,
+      target: targetNode,
+      floor_id: links[i].floor_id,
+      id: links[i].id,
+      status: links[i].status
+    });
+  }
+
+  // replace the links propert of graph with the new modified links
+  graph.links = modifiedLinks;
+}
+
+/**
+  * This function adds "scaledX" and "scaledY" attributes to each node object.
+  * These new attributes will be used in determining the node's visual position
+  * given a certain browser width and height. Using these attributes, we can
+  * also have a graph visualization that can respond to resizing of the browser
+  * window by calculating the new node position for each browser resize.
+  *
+  * @param {array} nodes - array of node objects on a given floor
+  * @return {array} nodes - array of modified node objects
+  */
+GraphDataFetcher.prototype.modifyNodesForDisplay = function(nodes) {
+  for (var i = 0; i < nodes.length; i++) {
+    nodes[i].scaledX = (ui.svgWidth * nodes[i].x_coordinate) / ui.baseSVGWidth;
+    /* TODO: don't scale the y_coordinate positioning of the node. It should be
+      independent of the browser width. No need to scale the height for
+      responsive design */
+    // nodes[i].scaledY = (ui.svgHeight * nodes[i].y_coordinate) / ui.baseSVGHeight;
+    nodes[i].scaledY = nodes[i].y_coordinate;
+  }
+}
+
+
+/**
+  * This method gets all of the nodes from the server.
+  */
+GraphDataFetcher.prototype.getDataForEdit = function() {
   // ajax call to get graph data
   var request = $.ajax({
-    url: BASEURL + '/floor/' + floorNumber.toString(),
+    url: BASEURL + '/nodes/edit',
     type: 'GET',
     dataType: 'json',
     context: this
   });
 
   request.done(function(_data, textStatus, jqXHR) {
-    var nodes = _data.data.graph.nodes;
-
     /* third argument of Floor constructor is for the array of links. But
       since the admin user is only concerned in the editing of the position
       of the nodes, the present links doesn't matter. That's why we just pass
       null for the links array in the Floor constructor.
     */
-    var floor_for_edit = new Floor(floorNumber, nodes, null);
-
-    this.graphDrawer = new SingleGraphDrawer(floor_for_edit);
+    // var floor_for_edit = new Floor(floorNumber, nodes, null);
+    //
+    this.graphDrawer = new GraphDrawer();
+    this.graphDrawer.setGraph(_data.data.graph);
     this.graphDrawer.drawGraphForEdit();
   });
 
@@ -140,64 +229,6 @@ GraphDataFetcher.prototype.getGraphPerFloor = function(graphData) {
       this.floors[i].links = this.modifyLinks(nodes, links);
     }
   }
-}
-
-/**
-  * This function adds "scaledX" and "scaledY" attributes to each node object.
-  * These new attributes will be used in determining the node's visual position
-  * given a certain browser width and height. Using these attributes, we can
-  * also have a graph visualization that can respond to resizing of the browser
-  * window by calculating the new node position for each browser resize.
-  *
-  * @param {array} nodes - array of node objects on a given floor
-  * @return {array} nodes - array of modified node objects
-  */
-GraphDataFetcher.prototype.modifyNodesForDisplay = function(nodes) {
-  for (var i = 0; i < nodes.length; i++) {
-    nodes[i].scaledX = (ui.svgWidth * nodes[i].x_coordinate) / ui.baseSVGWidth;
-    nodes[i].scaledY = (ui.svgHeight * nodes[i].y_coordinate) / ui.baseSVGHeight;
-  }
-}
-
-/**
-  * The link objects' source and target attributes are currently set to the
-  * "node_id" of the source and target nodes. Using these node_ids, the source
-  * and target attributes of each link object will be change to point to the
-  * corresponding node objects from the @param {array} nodes.
-  *
-  * @param {array} nodes - array of node objects on a given floor
-  * @param {array} links - array of link objects on a given floor.
-  * @return {array} modifiedLinks
-  */
-GraphDataFetcher.prototype.modifyLinks = function(nodes, links) {
-  var modifiedLinks = [];
-
-  for (var i = 0; i < links.length; i++) {
-    var sourceNode = null;
-    var targetNode = null;
-
-    for (var j = 0; j < nodes.length; j++) {
-      if (nodes[j].id === links[i].source_id) {
-        sourceNode = nodes[j];
-      } else if (nodes[j].id === links[i].target_id) {
-        targetNode = nodes[j];
-      }
-
-      if (sourceNode !== null && targetNode !== null) {
-        break;
-      }
-    }
-
-    modifiedLinks.push({
-      source: sourceNode,
-      target: targetNode,
-      floor_id: links[i].floor_id,
-      id: links[i].id,
-      status: links[i].status
-    });
-  }
-
-  return modifiedLinks;
 }
 
 /**

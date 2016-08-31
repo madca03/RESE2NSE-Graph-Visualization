@@ -1,23 +1,27 @@
-/***************  SingleGraphDrawer Class  ***********/
+/***************  GraphDrawer Class  ***********/
 
-function SingleGraphDrawer(floor) {
-  this.floorNumber = floor.floorNumber;
-  this.nodes = floor.nodes;
-  this.links = floor.links;
+function GraphDrawer() {
+  this.nodes = [];
+  this.links = [];
   this.svgStage = null;
   this.width = ui.svgWidth;
   this.height = ui.svgHeight;
   this.linkSelection = null;
   this.nodeSelection = null;
-  this.floorSelector = "div#floor" + this.floorNumber.toString() + " .graph-container";
   this.force = null;
   this.forEdit = false;
   this.baseGraphContainerWidth = 866;
-  this.baseGraphContainerHeight = 396;
-  this.updateJustEnabled = floor.updateJustEnabled;
+  // this.baseGraphContainerHeight = 396;
+  this.baseGraphContainerHeight = ui.svgHeight;
+  // this.updateJustEnabled = floor.updateJustEnabled;
 }
 
-SingleGraphDrawer.prototype.createArrowHead = function() {
+GraphDrawer.prototype.setGraph = function(graph) {
+  this.nodes = graph.nodes;
+  this.links = graph.links;
+}
+
+GraphDrawer.prototype.createArrowHead = function() {
   // build the arrow.
   if (this.svgStage.select("defs")[0][0] === null) {
     this.svgStage.append("defs")
@@ -35,58 +39,19 @@ SingleGraphDrawer.prototype.createArrowHead = function() {
   }
 }
 
-SingleGraphDrawer.prototype.drawGraphDisplay = function() {
+GraphDrawer.prototype.drawGraphDisplay = function() {
   // initial graph display
   this.initSVGStage();
   this.createArrowHead();
   this.getLinkSelection();
   this.getNodeSelection();
-  this.scaleNodePosition();
+
+  // this.scaleNodePosition();
   this.createSVGLinks();
   this.createSVGNodes();
 }
 
-SingleGraphDrawer.prototype.updateGraphDisplay = function() {
-  // This block is for normal graph update
-    this.getSVGStage();
-    this.removeSVGLinks();
-
-    this.getNodeSelection();
-    this.getLinkSelection();
-
-    this.scaleNodePosition();
-    this.createSVGLinks();
-
-    if (this.updateJustEnabled) {
-      this.removeSVGNodes();
-      this.getNodeSelection();
-      this.createSVGNodes();
-    }
-}
-
-SingleGraphDrawer.prototype.updateArchiveGraphDisplay = function() {
-  // This block is for updating the graph display for archive graph dataset
-    this.getSVGStage();
-    this.removeSVGLinks();
-    this.removeSVGNodes();
-
-    this.getNodeSelection();
-    this.getLinkSelection();
-
-    this.scaleNodePosition();
-    this.createSVGLinks();
-    this.createSVGNodes();
-}
-
-SingleGraphDrawer.prototype.removeSVGLinks = function() {
-  $(this.floorSelector + " svg g.links-group").empty();
-}
-
-SingleGraphDrawer.prototype.removeSVGNodes = function() {
-  $(this.floorSelector + " svg g.nodes-group").empty();
-}
-
-SingleGraphDrawer.prototype.scaleNodePosition = function() {
+GraphDrawer.prototype.scaleNodePosition = function() {
   var currentSVGWidth = this.width;
   var currentSVGHeight = this.height;
   var baseGraphContainerWidth = this.baseGraphContainerWidth;
@@ -115,7 +80,8 @@ SingleGraphDrawer.prototype.scaleNodePosition = function() {
     });
 }
 
-SingleGraphDrawer.prototype.drawGraphForEdit = function() {
+
+GraphDrawer.prototype.drawGraphForEdit = function() {
   this.forEdit = true;
   this.initSVGStage();
   this.initForceLayout();
@@ -124,7 +90,50 @@ SingleGraphDrawer.prototype.drawGraphForEdit = function() {
   this.addNodeDragBehavior();
 }
 
-SingleGraphDrawer.prototype.createSVGNodesForEdit = function() {
+/**
+  * This method creates an SVG stage for the graph display and it appends the
+  * created SVG stage as a child to the div.graph-container element. The height
+  * and width of the svg stage is set based on the width and height of the
+  * image.
+  */
+
+GraphDrawer.prototype.initSVGStage = function() {
+  this.svgStage = d3.select('.graph-container').append("svg")
+    .attr("width", this.width)
+    .attr("height", this.height);
+
+  // add svg group elements for the links and nodes
+  this.svgStage.append("g").attr("class", "links-group");
+  this.svgStage.append("g").attr("class", "nodes-group");
+}
+
+/**
+  * This method starts the force layout algorithm provided by the D3js library.
+  * The force layout algorithm will be used for implementing drag and drop
+  * features and for smooth transition of nodes from one place to another.
+  *
+  * Example use of D3js force layout can be found here:
+  * https://bl.ocks.org/mbostock/4062045
+  */
+
+GraphDrawer.prototype.initForceLayout = function() {
+  this.force = d3.layout.force()
+    .nodes(this.nodes)
+    .size([ui.svgWidth, ui.svgHeight])
+    .start();
+}
+
+/**
+  * This method creates a data-binding between the nodes' data and the
+  * svg g.node elements.
+  */
+GraphDrawer.prototype.getNodeSelection = function() {
+  this.nodeSelection = this.svgStage.select("g.nodes-group")
+    .selectAll("g.node")
+    .data(this.nodes);
+}
+
+GraphDrawer.prototype.createSVGNodesForEdit = function() {
   this.nodeSelection.enter().append("g")
     .attr("class", "node");
 
@@ -132,11 +141,80 @@ SingleGraphDrawer.prototype.createSVGNodesForEdit = function() {
   this.createNodeLabel();
 }
 
-SingleGraphDrawer.prototype.getNodeDragBehavior = function() {
+// add a svg:circle element inside a node group
+GraphDrawer.prototype.createNodeCircle = function() {
+  var graphForEdit = this.forEdit;
+  var nodeCircle = this.nodeSelection.append("circle")
+    .attr("class", "circle")
+    .attr("cx", function(d) {
+      if (graphForEdit) {
+        return "0px";
+      } else {
+        return d.scaledX;
+      }
+    })
+    .attr("cy", function(d) {
+      if (graphForEdit) {
+        return "0px";
+      } else {
+        return d.scaledY;
+      }
+    })
+    .attr("r", NODERADIUS);
+
+  this.setStylesToCircle(nodeCircle);
+  this.setNodeColor(nodeCircle);
+
+  if (!this.forEdit) {
+    this.addClickEventToCircle(nodeCircle);
+  }
+}
+
+GraphDrawer.prototype.updateGraphDisplay = function() {
+  console.log("update graph");
+  // This block is for normal graph update
+    this.getSVGStage();
+    this.removeSVGLinks();
+
+    this.getNodeSelection();
+    this.getLinkSelection();
+
+    this.scaleNodePosition();
+    this.createSVGLinks();
+
+    // if (this.updateJustEnabled) {
+      this.removeSVGNodes();
+      this.getNodeSelection();
+      this.createSVGNodes();
+    // }
+}
+
+GraphDrawer.prototype.updateArchiveGraphDisplay = function() {
+  // This block is for updating the graph display for archive graph dataset
+    this.getSVGStage();
+    this.removeSVGLinks();
+    this.removeSVGNodes();
+
+    this.getNodeSelection();
+    this.getLinkSelection();
+
+    this.scaleNodePosition();
+    this.createSVGLinks();
+    this.createSVGNodes();
+}
+
+GraphDrawer.prototype.removeSVGLinks = function() {
+  $(this.floorSelector + " svg g.links-group").empty();
+}
+
+GraphDrawer.prototype.removeSVGNodes = function() {
+  $(this.floorSelector + " svg g.nodes-group").empty();
+}
+
+GraphDrawer.prototype.getNodeDragBehavior = function() {
   var force = this.force;
   var tick = this.getTick();
 
-  console.log(this.nodes);
   var nodes = this.nodes;
 
   var nodeDrag = d3.behavior.drag()
@@ -190,7 +268,7 @@ SingleGraphDrawer.prototype.getNodeDragBehavior = function() {
   return nodeDrag;
 }
 
-SingleGraphDrawer.prototype.getTick = function() {
+GraphDrawer.prototype.getTick = function() {
   var node = this.nodeSelection;
 
   /* This function is called whenever a node is drag to a new position.
@@ -215,57 +293,34 @@ SingleGraphDrawer.prototype.getTick = function() {
   return tick;
 }
 
-SingleGraphDrawer.prototype.addNodeDragBehavior = function() {
+GraphDrawer.prototype.addNodeDragBehavior = function() {
   this.nodeSelection.call(this.getNodeDragBehavior());
   this.force.on("tick", this.getTick());
 }
 
-SingleGraphDrawer.prototype.initForceLayout = function() {
-  this.force = d3.layout.force()
-    .nodes(this.nodes)
-    .size([ui.svgWidth, ui.svgHeight])
-    .start();
-}
-
-SingleGraphDrawer.prototype.initSVGStage = function() {
-  this.svgStage = d3.select(this.floorSelector).append("svg")
-    .attr("width", this.width)
-    .attr("height", this.height);
-
-  // add svg group elements for the links and nodes
-  this.svgStage.append("g").attr("class", "links-group");
-  this.svgStage.append("g").attr("class", "nodes-group");
-}
-
-SingleGraphDrawer.prototype.getSVGStage = function() {
+GraphDrawer.prototype.getSVGStage = function() {
   this.svgStage = d3.select(this.floorSelector).select('svg');
   this.svgStage.attr("width", this.width);
   this.svgStage.attr("height", this.height);
 }
 
-SingleGraphDrawer.prototype.getLinkSelection = function() {
+GraphDrawer.prototype.getLinkSelection = function() {
   this.linkSelection = this.svgStage.select("g.links-group")
     .selectAll("path.link")
     .data(this.links);
 }
 
-SingleGraphDrawer.prototype.getNodeSelection = function() {
-  this.nodeSelection = this.svgStage.select("g.nodes-group")
-    .selectAll("g.node")
-    .data(this.nodes);
-}
-
 /**
  * This method SVG nodes from the previous graph dataset.
  */
-SingleGraphDrawer.prototype.removeOldSVGNodes = function() {
+GraphDrawer.prototype.removeOldSVGNodes = function() {
   this.nodeSelection = this.svgStage.select("g.nodes-group")
     .selectAll("g.node")
     .data([]);
    this.nodeSelection.exit().remove();
 }
 
-SingleGraphDrawer.prototype.createSVGLinks = function() {
+GraphDrawer.prototype.createSVGLinks = function() {
   this.createArrowHead();
 
   // "Enter" sub-selection
@@ -278,7 +333,7 @@ SingleGraphDrawer.prototype.createSVGLinks = function() {
   this.setStylesToLinks();
 }
 
-SingleGraphDrawer.prototype.removeOldSVGLinks = function() {
+GraphDrawer.prototype.removeOldSVGLinks = function() {
   this.linkSelection = this.svgStage.select("g.links-group")
     .selectAll("path.link").data([]);
   this.linkSelection.exit().remove();
@@ -288,7 +343,7 @@ SingleGraphDrawer.prototype.removeOldSVGLinks = function() {
  * This method updates the link selection by binding the new link data
  * to the SVG links.path.
  */
-SingleGraphDrawer.prototype.updateSVGLinkSelection = function() {
+GraphDrawer.prototype.updateSVGLinkSelection = function() {
   this.linkSelection = this.linkSelection.data(this.links);
 }
 
@@ -296,11 +351,11 @@ SingleGraphDrawer.prototype.updateSVGLinkSelection = function() {
  * This method updates the node selection by binding the new node data
  * to the SVG g.nodes
  */
-SingleGraphDrawer.prototype.updateSVGNodeSelection = function() {
+GraphDrawer.prototype.updateSVGNodeSelection = function() {
   this.nodeSelection = this.nodeSelection.data(this.nodes);
 }
 
-SingleGraphDrawer.prototype.computeLinkCurvature = function() {
+GraphDrawer.prototype.computeLinkCurvature = function() {
   // The "d" attribute of the SVG path element specifies the type of path
   // that links the two nodes. In this case, the type of path is an arc
   this.linkSelection.attr("d", function(d) {
@@ -383,14 +438,14 @@ SingleGraphDrawer.prototype.computeLinkCurvature = function() {
   });
 }
 
-SingleGraphDrawer.prototype.setStylesToLinks = function() {
+GraphDrawer.prototype.setStylesToLinks = function() {
   this.setLinkStroke();
   this.setLinkStrokeWidth();
   this.linkSelection.attr('stroke-opacity', LINKSTROKEOPACITY);
   this.linkSelection.attr('fill', 'none');
 }
 
-SingleGraphDrawer.prototype.setLinkStroke = function() {
+GraphDrawer.prototype.setLinkStroke = function() {
   this.linkSelection.attr('stroke', function(d) {
       switch (d.status) {
         case 'heavy':
@@ -406,7 +461,7 @@ SingleGraphDrawer.prototype.setLinkStroke = function() {
     });
 }
 
-SingleGraphDrawer.prototype.setLinkStrokeWidth = function()  {
+GraphDrawer.prototype.setLinkStrokeWidth = function()  {
   this.linkSelection.attr('stroke-width', function(d) {
     switch (d.status) {
       case 'heavy':
@@ -422,7 +477,7 @@ SingleGraphDrawer.prototype.setLinkStrokeWidth = function()  {
   });
 }
 
-SingleGraphDrawer.prototype.createSVGNodes = function() {
+GraphDrawer.prototype.createSVGNodes = function() {
   this.nodeSelection.enter()
     .append("g")
     .attr("class", "node");
@@ -432,36 +487,7 @@ SingleGraphDrawer.prototype.createSVGNodes = function() {
   this.createTooltip();
 }
 
-// add a svg:circle element inside a node group
-SingleGraphDrawer.prototype.createNodeCircle = function() {
-  var graphForEdit = this.forEdit;
-  var nodeCircle = this.nodeSelection.append("circle")
-    .attr("class", "circle")
-    .attr("cx", function(d) {
-      if (graphForEdit) {
-        return "0px";
-      } else {
-        return d.scaledX;
-      }
-    })
-    .attr("cy", function(d) {
-      if (graphForEdit) {
-        return "0px";
-      } else {
-        return d.scaledY;
-      }
-    })
-    .attr("r", NODERADIUS);
-
-  this.setStylesToCircle(nodeCircle);
-  this.setNodeColor(nodeCircle);
-
-  if (!this.forEdit) {
-    this.addClickEventToCircle(nodeCircle);
-  }
-}
-
-SingleGraphDrawer.prototype.addClickEventToCircle = function(nodeCircle) {
+GraphDrawer.prototype.addClickEventToCircle = function(nodeCircle) {
   nodeCircle.on("click", function() {
     var nodeID = this.__data__.id;
 
@@ -495,12 +521,12 @@ SingleGraphDrawer.prototype.addClickEventToCircle = function(nodeCircle) {
   nodeCircle.attr("cursor", "pointer");
 }
 
-SingleGraphDrawer.prototype.setStylesToCircle = function(nodeCircle) {
+GraphDrawer.prototype.setStylesToCircle = function(nodeCircle) {
   nodeCircle.attr("stroke", "black")
     .attr("stroke-width", "2px");
 }
 
-SingleGraphDrawer.prototype.setNodeColor = function(nodeCircle) {
+GraphDrawer.prototype.setNodeColor = function(nodeCircle) {
   nodeCircle.attr("fill", function(d) {
     switch (d.type) {
       case 'Temperature':
@@ -522,7 +548,7 @@ SingleGraphDrawer.prototype.setNodeColor = function(nodeCircle) {
 // add a svg:text element inside a node group
 // and set the x and y attributes of the svg:text element
 // similar to the node's svg:circle element's x and y attributes
-SingleGraphDrawer.prototype.createNodeLabel = function() {
+GraphDrawer.prototype.createNodeLabel = function() {
   this.nodeSelection.append("text")
     .attr("class", "nodetext")
     .attr("x", function(d) { return d.scaledX; })
@@ -532,7 +558,7 @@ SingleGraphDrawer.prototype.createNodeLabel = function() {
     .text(function(d) { return d.label; });
 }
 
-SingleGraphDrawer.prototype.createTooltip = function() {
+GraphDrawer.prototype.createTooltip = function() {
   var singleGraphDrawerObj = this;
 
   // Add tooltip functionality to each circle SVG DOM element
@@ -556,7 +582,7 @@ SingleGraphDrawer.prototype.createTooltip = function() {
   });
 }
 
-SingleGraphDrawer.prototype.tooltipContents = function(node_data) {
+GraphDrawer.prototype.tooltipContents = function(node_data) {
   var html = ""
     + "<div class='tooltip-row'>Mac Address: " + node_data.mac_address + "</div>"
     + "<div class='tooltip-row'>Last Transmission: " + node_data.last_transmission + "</div>"
@@ -565,4 +591,4 @@ SingleGraphDrawer.prototype.tooltipContents = function(node_data) {
   return html;
 }
 
-/*************  END SingleGraphDrawer Class  *********/
+/*************  END GraphDrawer Class  *********/

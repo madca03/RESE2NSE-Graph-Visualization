@@ -7,29 +7,54 @@ function EventHandler() {}
   * It then calls the graphDataFetcher.getDataForEdit() function to get
   * the nodes corresponding to the floor to be edited.
   */
-EventHandler.prototype.editBtnClicked = function(floorNumber) {
-  // remove the edit button and replace it with a save
-  // button and cancel button
-  var edit_btns = $('.edit-btn').remove();
-  var floor_labels = $('.floor-label');
-
-  // remove all DOM elements inside the floor-group div
-  var floor_group = $('.floor-group')[0];
-  while (floor_group.firstChild) {
-    floor_group.removeChild(floor_group.firstChild);
-  }
-
-  // add the new floor label inside the floor group div
-  floor_group.innerHTML = this.newFloorLabel(floorNumber);
+EventHandler.prototype.editBtnClicked = function() {
+  /* remove the edit button and the time slider from the guest user display
+    and replace it with a save button and cancel button for the admin user display.
+    Also remove the svg stage used for guest user display. This will be replaced
+    by a new svg stage for the admin user display.
+  */
+  $('.edit-btn').remove();
+  $('.slider-container').remove();
+  $('.floor-label').append("<button type='button' class='success button save-btn'>Save Graph</button>");
+  $('.floor-label').append("<button type='button' class='success button cancel-btn'>Cancel</button>");
+  $('.graph-container svg').remove();
+  // remove all DOM elements inside the floor-group div <- TODO: don't remove anymore
+  /* since there will be only one picture, just retain the whole graph */
+  // var floor_group = $('.floor-group')[0];
+  // while (floor_group.firstChild) {
+  //   floor_group.removeChild(floor_group.firstChild);
+  // }
 
   // add css properties to the floor image
-  var newFloorImg = $('.floor-img')[0];
-  newFloorImg.style.width = ui.svgWidth.toString() + 'px';
-  newFloorImg.style.height = ui.svgHeight.toString() + 'px';
-  newFloorImg.style.position = 'absolute';
-  newFloorImg.style.zIndex = '-1';
+  // var newFloorImg = $('.floor-img')[0];
+  // newFloorImg.style.width = ui.svgWidth.toString() + 'px';
+  // newFloorImg.style.height = ui.svgHeight.toString() + 'px';
+  // newFloorImg.style.position = 'absolute';
+  // newFloorImg.style.zIndex = '-1';
+  //
+  graphDataFetcher.getDataForEdit();
+}
 
-  graphDataFetcher.getDataForEdit(floorNumber);
+/**
+  * This function creates a new floor container for the floor to be edited.
+  */
+EventHandler.prototype.newFloorLabel = function(floorNumber) {
+  // create the new floor label div with corresponding floor number
+  var newFloorLabel = ''
+    + '<div class="floor" id="floor' + floorNumber.toString() + '">'
+      + '<div class="floor-label">'
+        + '<span>Floor ' + floorNumber.toString() + '</span>'
+        + '<button type="button" class="success button save-btn">Save Graph</button>'
+        + '<button type="button" class="success button cancel-btn">Cancel</button>'
+      + '</div> <!-- end .floor-label -->'
+      + '<div class="floor-graph">'
+        + '<div class="graph-container">'
+          + '<img src="/images/floorplan-merge.jpg" class="floor-img">'
+        + '</div> <!-- end .graph-container -->'
+      + '</div> <!-- end .floor-graph -->'
+    + '</div> <!-- end .floor#floor1 -->';
+
+    return newFloorLabel;
 }
 
 EventHandler.prototype.getUpdatedNodes = function() {
@@ -78,6 +103,7 @@ EventHandler.prototype.cancelBtnClicked = function() {
 
 EventHandler.prototype.saveBtnClicked = function() {
   var updatedNodes = this.getUpdatedNodes();
+  console.log(updatedNodes);
 
   // if there are modified nodes
   if (updatedNodes.length !== 0) {
@@ -88,28 +114,6 @@ EventHandler.prototype.saveBtnClicked = function() {
   else {
     location.reload();
   }
-}
-
-/**
-  * This function creates a new floor container for the floor to be edited.
-  */
-EventHandler.prototype.newFloorLabel = function(floorNumber) {
-  // create the new floor label div with corresponding floor number
-  var newFloorLabel = ''
-    + '<div class="floor" id="floor' + floorNumber.toString() + '">'
-      + '<div class="floor-label">'
-        + '<span>Floor ' + floorNumber.toString() + '</span>'
-        + '<button type="button" class="success button save-btn">Save Graph</button>'
-        + '<button type="button" class="success button cancel-btn">Cancel</button>'
-      + '</div> <!-- end .floor-label -->'
-      + '<div class="floor-graph">'
-        + '<div class="graph-container">'
-          + '<img src="/images/floorplan7.jpg" class="floor-img">'
-        + '</div> <!-- end .graph-container -->'
-      + '</div> <!-- end .floor-graph -->'
-    + '</div> <!-- end .floor#floor1 -->';
-
-    return newFloorLabel;
 }
 
 /**************  END EventHandler Class  *************/

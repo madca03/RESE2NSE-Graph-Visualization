@@ -31,15 +31,15 @@ UI.prototype.setTimeSlider = function() {
       min: 1,
       disabled: true,
       slide: function(event, ui) {
-          var floorNumber = $(this).data("floorNumber");
-          var floor = null;
-
-          for (var i = 0; i < floors.length; i++) {
-            if (floors[i].floorNumber === floorNumber) {
-              floor = floors[i];
-              break;
-            }
-          }
+          // var floorNumber = $(this).data("floorNumber");
+          // var floor = null;
+          //
+          // for (var i = 0; i < floors.length; i++) {
+          //   if (floors[i].floorNumber === floorNumber) {
+          //     floor = floors[i];
+          //     break;
+          //   }
+          // }
 
           // update the time-label of the graph
           var date = new Date(thisObj.archive_date[ui.value - 1].datetime_archive);
@@ -55,47 +55,48 @@ UI.prototype.setTimeSlider = function() {
             timeZoneName: 'long'
           };
 
-          $("#slider-time-" + floor.floorNumber)
+          $(".slider-time")
             .html(date.toLocaleString('en-us', date_options));
       },
-      change: function(event, ui) {
-        var max = $(".slider-range").slider("option", "max");
-        var floorNumber = $(this).data("floorNumber");
-        var floor = null;
-
-        // global variable "floors"
-        // find the floor object corresponding to this slider
-        for (var i = 0; i < floors.length; i++) {
-          if (floors[i].floorNumber === floorNumber) {
-            floor = floors[i];
-            break;
-          }
-        }
-
-        if (ui.value != max) {
-          /*
-            disable the update on the floor so that the graph for the
-            time specified is shown.
-            continuously update other floors whose ui.value is equal to
-            the max time.
-          */
-
-          floor.updateDisabled = true;
-          if (floor.recentlyDisabled) {
-            floor.updateJustEnabled = false;
-          }
-
-          // update the display for the specific floor to show the graph
-          // for the chosen time.
-          graphDataFetcher.getArchiveDataForDisplay(floorNumber, ui.value);
-
-        } else {
-          if (floor.updateDisabled) {
-            floor.updateDisabled = false;
-            floor.updateJustEnabled = true;
-          }
-        }
-      }
+      // change: function(event, ui) {
+      //   var max = $(".slider-range").slider("option", "max");
+      //   var floorNumber = $(this).data("floorNumber");
+      //   var floor = null;
+      //
+      //   // global variable "floors"
+      //   // find the floor object corresponding to this slider
+      //   for (var i = 0; i < floors.length; i++) {
+      //     if (floors[i].floorNumber === floorNumber) {
+      //       floor = floors[i];
+      //       break;
+      //     }
+      //   }
+      //
+      //   if (ui.value != max) {
+      //     /*
+      //       disable the update on the floor so that the graph for the
+      //       time specified is shown.
+      //       continuously update other floors whose ui.value is equal to
+      //       the max time.
+      //     */
+      //
+      //     floor.updateDisabled = true;
+      //     if (floor.recentlyDisabled) {
+      //       floor.updateJustEnabled = false;
+      //     }
+      //
+      //     // update the display for the specific floor to show the graph
+      //     // for the chosen time.
+      //     graphDataFetcher.getArchiveDataForDisplay(floorNumber, ui.value);
+      //
+      //   } else {
+      //     if (floor.updateDisabled) {
+      //       floor.updateDisabled = false;
+      //       floor.updateJustEnabled = true;
+      //     }
+      //   }
+      // }
+      // // end change
   });
 }
 
@@ -110,10 +111,16 @@ UI.prototype.setFloorImageDimensions = function() {
   var floor_img = $(".floor-img");
   var img_border = parseFloat($(floor_img).css('border-top-width'));
   var container_width = parseFloat($(graph_container).css('width'));
-  var container_height = parseFloat($(graph_container).css('height'));
+
+  /* don't use the height of the div.graph-container, use the height of the
+  image instead */
+  // var container_height = parseFloat($(graph_container).css('height'));
+  var img_height = parseFloat($(floor_img).css('height'));
+
+  $(graph_container).css('height', img_height);
 
   this.svgWidth = container_width - img_border;
-  this.svgHeight = container_height - img_border;
+  this.svgHeight = img_height - img_border;
 
   $(floor_img).css("width", this.svgWidth.toString() + 'px');
   $(floor_img).css("height", this.svgHeight.toString() + 'px');

@@ -1,12 +1,10 @@
 var models = require('../../models/index');
 
 /* This route is called when an admin user would like to edit the graph.
-  This returns all of the nodes associated with the given
-  floor number parameter.
+  This route returns all of the nodes.
 
-  In editing the nodes on a floor, the admin user is only concerned with
-  the nodes on that floor and not on the links on the floor that's why
-  we return only the nodes on a floor.
+  In editing the nodes, the admin user is only concerned with
+  the nodes and not on the links that's why we return only the nodes.
   (BASTA NODES LANG IPASA hahaha haba pa ng sinabi ko.)
 */
 
@@ -23,9 +21,7 @@ module.exports = function(req, res, next) {
     + 'INNER JOIN nodes_present '
       + 'ON (nodes.id = nodes_present.node_id) '
     + 'INNER JOIN sensors '
-      + 'ON (nodes.sensor_id = sensors.id) '
-    + 'WHERE nodes.floor_id = '
-      + req.params.floor_number + ';';
+      + 'ON (nodes.sensor_id = sensors.id);'
 
   models.sequelize.query(node_query, { type: models.sequelize.QueryTypes.SELECT })  // Query all the nodes
     .then(function(nodes) {
