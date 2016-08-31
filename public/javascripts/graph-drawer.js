@@ -171,44 +171,43 @@ GraphDrawer.prototype.createNodeCircle = function() {
 }
 
 GraphDrawer.prototype.updateGraphDisplay = function() {
-  console.log("update graph");
   // This block is for normal graph update
-    this.getSVGStage();
-    this.removeSVGLinks();
+  this.getSVGStage();
+  this.removeSVGLinks();
 
-    this.getNodeSelection();
-    this.getLinkSelection();
+  this.getNodeSelection();
+  this.getLinkSelection();
 
-    this.scaleNodePosition();
-    this.createSVGLinks();
+  // this.scaleNodePosition();
+  this.createSVGLinks();
 
-    // if (this.updateJustEnabled) {
-      this.removeSVGNodes();
-      this.getNodeSelection();
-      this.createSVGNodes();
-    // }
+  // // if (this.updateJustEnabled) {
+  //   this.removeSVGNodes();
+  //   this.getNodeSelection();
+  //   this.createSVGNodes();
+  // // }
 }
 
 GraphDrawer.prototype.updateArchiveGraphDisplay = function() {
   // This block is for updating the graph display for archive graph dataset
-    this.getSVGStage();
-    this.removeSVGLinks();
-    this.removeSVGNodes();
+  this.getSVGStage();
+  this.removeSVGLinks();
+  this.removeSVGNodes();
 
-    this.getNodeSelection();
-    this.getLinkSelection();
+  this.getNodeSelection();
+  this.getLinkSelection();
 
-    this.scaleNodePosition();
-    this.createSVGLinks();
-    this.createSVGNodes();
+  // this.scaleNodePosition();
+  this.createSVGLinks();
+  this.createSVGNodes();
 }
 
 GraphDrawer.prototype.removeSVGLinks = function() {
-  $(this.floorSelector + " svg g.links-group").empty();
+  $(".graph-container svg g.links-group").empty();
 }
 
 GraphDrawer.prototype.removeSVGNodes = function() {
-  $(this.floorSelector + " svg g.nodes-group").empty();
+  $('.graph-container svg g.nodes-group').empty();
 }
 
 GraphDrawer.prototype.getNodeDragBehavior = function() {
@@ -299,7 +298,7 @@ GraphDrawer.prototype.addNodeDragBehavior = function() {
 }
 
 GraphDrawer.prototype.getSVGStage = function() {
-  this.svgStage = d3.select(this.floorSelector).select('svg');
+  this.svgStage = d3.select('.graph-container').select('svg');
   this.svgStage.attr("width", this.width);
   this.svgStage.attr("height", this.height);
 }

@@ -27,9 +27,11 @@ $(function() {
   ui.setTimeSlider();
 
   graphDataFetcher.getDataForDisplay();
-  // var display_timer = setInterval(function() {
-  //   graphDataFetcher.getDataForDisplay();
-  // }, UPDATERATE);
+  var display_timer = setInterval(function() {
+    if (!graphDataFetcher.updateDisabled) {
+      graphDataFetcher.getDataForDisplay();
+    }
+  }, UPDATERATE);
 
   // for (var i = 1; i <= 120; i++) {
   //     setTimeout(function() {
@@ -39,7 +41,7 @@ $(function() {
 
   // setTimeout(function() {
   //   graphDataFetcher.getDataForDisplay();
-  // }, 10000);
+  // }, 2000);
 
   // function is called when the browser is resized
 
@@ -58,7 +60,7 @@ $(function() {
 
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
-    // clearInterval(display_timer);
+    clearInterval(display_timer);
     eventHandler.editBtnClicked();
 
     // add event handler to cancel button

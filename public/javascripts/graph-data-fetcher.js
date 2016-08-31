@@ -8,6 +8,7 @@ function GraphDataFetcher(floorCount, floors) {
 
   // temporarily place the attribute from MultiGraphDrawer here
   this.graphDisplayed = false;
+  this.updateDisabled = false;
 }
 
 /**
@@ -36,41 +37,25 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
   });
 
   request.done(function(_data, textStatus, jqXHR) {
-    // if (_data.data.date_archive_count > 0) {
-    // }
+    if (_data.data.date_archive_count > 0) {
+      this.modifyNodesForDisplay(_data.data.graph.nodes);
+      this.modifyLinks(_data.data.graph);
 
-    this.modifyNodesForDisplay(_data.data.graph.nodes);
-    this.modifyLinks(_data.data.graph);
+      this.graphDrawer = new GraphDrawer();
+      this.graphDrawer.setGraph(_data.data.graph);
 
-    this.graphDrawer = new GraphDrawer();
-    this.graphDrawer.setGraph(_data.data.graph);
-    this.graphDrawer.drawGraphDisplay();
-    // if (this.graphDisplayed) {
-    //   this.graphDrawer.updateGraphDisplay();
-    // } else {  // if it's the first time to display the graph
-    //   this.graphDrawer.drawGraphDisplay();
-    //   this.graphDisplayed = true;
-    // }
+      if (this.graphDisplayed) {  // if graph display if just for update
+        this.graphDrawer.updateGraphDisplay();
+      } else {  // if it's the first time to display the graph
+        this.graphDrawer.drawGraphDisplay();
+        this.graphDisplayed = true;
+      }
 
-
-    // this.floors.push(new Floor(1, _data.data.graph.nodes, links));
-    // console.log(this.floors);
-
-
-
-
-    // // separate the graph data per floor
-    // this.getGraphPerFloor(_data.data.graph);
-    //
-    // // draw all of the graphs
-    // // graphDrawer is of type MultiGraphDrawer
-    // this.graphDrawer.drawGraphsForDisplay(this.floors);
-    //
-    // // update the maximum value of the slider to the total archive count
-    ui.updateSliderRange(_data.data.date_archive_count);
-    //
-    // // update the array of archive dates stores in the UI object
-    ui.updateArchiveDate(_data.data.date_archive);
+      // update the maximum value of the slider to the total archive count
+      ui.updateSliderRange(_data.data.date_archive_count);
+      // update the array of archive dates stores in the UI object
+      ui.updateArchiveDate(_data.data.date_archive);
+    }
   });
 
   request.fail(function(jqXHR, textStatus, errorThrown) {
@@ -84,9 +69,8 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
   * and target attributes of each link object will be change to point to the
   * corresponding node objects from the @param {array} nodes.
   *
-  * @param {array} nodes - array of node objects on a given floor
-  * @param {array} links - array of link objects on a given floor.
-  * @return {array} modifiedLinks
+  * @param {object} graph - object containing the nodes and links
+  * @return {array} modifiedLinks passed as property to graph object
   */
 GraphDataFetcher.prototype.modifyLinks = function(graph) {
   var modifiedLinks = [];
@@ -232,36 +216,40 @@ GraphDataFetcher.prototype.getGraphPerFloor = function(graphData) {
 }
 
 /**
- * This method gets and updates the graph data for a specific floor and time.
+ * This method gets the archive data of a graph for a certain archived datetime.
  *
  * @param {Number} floorNumber: the floor to be updated with the archive graph data.
  * @param {Number} dateArchiveID: the ID of the archive date in the database.
  */
-GraphDataFetcher.prototype.getArchiveDataForDisplay = function(floorNumber, dateArchiveID) {
+GraphDataFetcher.prototype.getArchiveDataForDisplay = function(dateArchiveID) {
   var request = $.ajax({
-    url: BASEURL + "/archive/floor/" + floorNumber + "/date/" + dateArchiveID,
+    url: BASEURL + "/archive/date/" + dateArchiveID,
     type: "GET",
     dataType: "json",
     context: this
   });
 
   request.done(function(_data, statusText, jqXHR) {
-    var nodes = _data.data.graph.nodes;
-    var links = _data.data.graph.links;
+    this.modifyNodesForDisplay(_data.data.graph.nodes);
+    this.modifyLinks(_data.data.graph);
 
-    // find the Floor object which should be updated with the archive graph data
-    for (var i = 0; i < this.floors.length; i++) {
-      if (this.floors[i].floorNumber === floorNumber) {
-        this.modifyNodesForDisplay(nodes);
+    var graphDrawer = new GraphDrawer();
+    graphDrawer.setGraph(_data.data.graph);
+    graphDrawer.updateArchiveGraphDisplay();
 
-        this.floors[i].nodes = nodes;
-        this.floors[i].links = this.modifyLinks(nodes, links);
-        // update the graph display
-        var singleGraphDrawer = new SingleGraphDrawer(this.floors[i]);
-        singleGraphDrawer.updateArchiveGraphDisplay();
-        break;
-      }
-    }
+    // // find the Floor object which should be updated with the archive graph data
+    // for (var i = 0; i < this.floors.length; i++) {
+    //   if (this.floors[i].floorNumber === floorNumber) {
+    //     this.modifyNodesForDisplay(nodes);
+    //
+    //     this.floors[i].nodes = nodes;
+    //     this.floors[i].links = this.modifyLinks(nodes, links);
+    //     // update the graph display
+    //     var singleGraphDrawer = new SingleGraphDrawer(this.floors[i]);
+    //     singleGraphDrawer.updateArchiveGraphDisplay();
+    //     break;
+    //   }
+    // }
   });
 }
 

@@ -19,7 +19,6 @@ module.exports = function(req, res, next) {
       + 'INNER JOIN sensors '
         + 'ON (nodes.sensor_id = sensors.id) '
       + 'WHERE nodes.coordinate_set = true '
-      + 'AND nodes.floor_id = ' + req.params.floor_number + ' '
       + 'AND nodes_archive.date_created_id = ' + req.params.date_created_id + ';';
 
     var link_query = ''
@@ -46,7 +45,6 @@ module.exports = function(req, res, next) {
         + 'ON (nodes.id = nodes_archive.node_id) '
         + 'WHERE nodes.coordinate_set = true '
         + 'AND nodes_archive.date_created_id = ' + req.params.date_created_id + ') '
-      + 'AND links_archive.floor_id = ' + req.params.floor_number + ' '
       + 'AND links_archive.date_created_id = ' + req.params.date_created_id + ';';
 
     models.sequelize.query(node_query, {type: models.sequelize.QueryTypes.SELECT})

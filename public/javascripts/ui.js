@@ -5,7 +5,15 @@ function UI() {
   this.svgHeight = null;
   this.baseSVGWidth = 866;
   this.baseSVGHeight = 396;
+
+  /* "initialDisplay" property is used to know whether to
+    enable the slider or not.
+  */
   this.initialDisplay = true;
+
+  /* an array of objects of datetime_archive. The "datetime_archive" property
+    of each object contains the datetime.
+  */
   this.archive_date = [];
 }
 
@@ -24,25 +32,16 @@ UI.prototype.init = function() {
  * the maximum value for the slider.
  */
 UI.prototype.setTimeSlider = function() {
-  var thisObj = this;
+  var this_obj= this;
 
-  $(".slider-range").slider({
-      range: "max",
+  $('.slider-range').slider({
+      orientation: 'horizontal',
+      range: 'max',
       min: 1,
       disabled: true,
       slide: function(event, ui) {
-          // var floorNumber = $(this).data("floorNumber");
-          // var floor = null;
-          //
-          // for (var i = 0; i < floors.length; i++) {
-          //   if (floors[i].floorNumber === floorNumber) {
-          //     floor = floors[i];
-          //     break;
-          //   }
-          // }
-
           // update the time-label of the graph
-          var date = new Date(thisObj.archive_date[ui.value - 1].datetime_archive);
+          var date = new Date(this_obj.archive_date[ui.value - 1].datetime_archive);
 
           var date_options = {
             weekday: 'long',
@@ -58,6 +57,24 @@ UI.prototype.setTimeSlider = function() {
           $(".slider-time")
             .html(date.toLocaleString('en-us', date_options));
       },
+      stop: function(event, ui) {
+        /*disable the update on the floor so that the graph for the
+          time specified is shown.
+
+          "this" points to the slider
+        */
+        var max = $(this).slider('option','max');
+        if (ui.value != max) {
+          graphDataFetcher.updateDisabled = true;
+          /* pass the associated archive date to the current value of the slider
+            to the graph_drawer
+          */
+          graphDataFetcher.getArchiveDataForDisplay(ui.value);
+        } else {
+          graphDataFetcher.updateDisabled = false;
+          // graphDataFetcher.getDataForDisplay();
+        }
+      }
       // change: function(event, ui) {
       //   var max = $(".slider-range").slider("option", "max");
       //   var floorNumber = $(this).data("floorNumber");
@@ -204,63 +221,83 @@ UI.prototype.updateSideNav = function() {
  * @param {Number} archive_count: current total of archive sets in the database
  */
 UI.prototype.updateSliderRange = function(archive_count) {
-  var sliders = $('.slider-range').toArray();
+  // var sliders = $('.slider-range').toArray();
 
   // for each slider, update the slider value if the current slider is
   // pointing to the max value
-  for (var i = 0; i < sliders.length; i++) {
-    var currentSliderValue = $(sliders[i]).slider("option", "value");
-    var currentSliderMax = $(sliders[i]).slider("option", "max");
+  // for (var i = 0; i < sliders.length; i++) {
+  //   var currentSliderValue = $(sliders[i]).slider("option", "value");
+  //   var currentSliderMax = $(sliders[i]).slider("option", "max");
+  //
 
-    if (currentSliderValue === currentSliderMax && archive_count !== 0) {
-      $(sliders[i]).slider("option", "value", archive_count);
-    }
+  // }
+
+  var currentSliderValue = $('.slider-range').slider('option', 'value');
+  var currentSliderMax = $('.slider-range').slider('option', 'max');
+
+  /* if the guest user is currenly viewing the latest graph display and
+    there exists an archive data in the database then update the current
+    value of the slider as well as the max value of the slider to
+    the current archive count.
+
+    When the guest user is viewing the graph of an archive data, we should not
+    update the max value. If max value is updated when archived graph is being
+    viewed, the handler is adjusting to the left to accomodate for more slider
+    values of incoming datetime_archive. (so basically medyo pangit na
+    gumagalaw ng kusa yung handle haha :=) )
+  */
+  if ((currentSliderValue === currentSliderMax) && (archive_count !== 0)) {
+    $('.slider-range').slider('option', 'value', archive_count);
+    // update the max value of the slider to the current archive count
+    $('.slider-range').slider("option", "max", archive_count);
   }
 
-  // update the max value of all the sliders to the current archive count
-  $('.slider-range').slider("option", "max", archive_count);
-
-  // for the initial/first graph display, enable the use of the slider and
-  // set the current slider value to archive_count
+  /* for the initial/first graph display, enable the use of the slider and
+    set the current slider value to archive_count
+  */
   if (this.initialDisplay && archive_count !== 0) {
+    // enable the slider
     $('.slider-range').slider("option", "disabled", false);
-
     // only update slider range when there is archive data
     $('.slider-range').slider("value", archive_count);
-
+    // set the state of the graph as "displayed"
     this.initialDisplay = false;
   }
 }
 
 UI.prototype.updateArchiveDate = function(archive_date) {
-  // update the array of archive dates
+  /* update the array of archive dates by inserting the new archive dates to
+    the existing array
+  */
+
   for (var i = this.archive_date.length; i < archive_date.length; i++) {
     this.archive_date.push(archive_date[i]);
   }
 
-  var sliders = $('.slider-range').toArray();
   var currentMax = $('.slider-range').slider("option", "max");
+  var currentValue = $('.slider-range').slider("option", "value");
 
-  for (var i = 0; i < sliders.length; i++) {
-    var currentValue = $(sliders[i]).slider("option", "value");
+  /* if the slider handle is currently pointing at the maximum value
+    (in this case, the rightmost of the slider contains the maximum value)
+    and there exists arhive data then update the text showing the time
+    associated with the slider's max value.
+  */
+  if ((currentValue === currentMax) && (archive_date.length !== 0)) {
+    var slider_time = $('.slider-range').prev().children('.slider-time')[0]
+    var date = new Date(this.archive_date[this.archive_date.length - 1].datetime_archive);
 
-    if (currentValue === currentMax && archive_date.length !== 0) {
-      var slider_time = $(sliders[i]).prev().children('.slider-time')[0]
-      var date = new Date(this.archive_date[this.archive_date.length - 1].datetime_archive);
-
-      var date_options = {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-        timeZoneName: 'long'
-      }
-
-      $(slider_time).html(date.toLocaleString('en-us', date_options));
+    var date_options = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      timeZoneName: 'long'
     }
+
+    $(slider_time).html(date.toLocaleString('en-us', date_options));
   }
 }
 
