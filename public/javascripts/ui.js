@@ -62,11 +62,15 @@ UI.prototype.setTimeSlider = function() {
         */
         var max = $(this).slider('option','max');
         if (ui.value != max) {
+
+          /* Set the updateDisabled to true so that the continuously running
+            function in graph.js that updates the graph will not execute.
+          */
           graphDataFetcher.updateDisabled = true;
+
           /* pass the associated archive date to the current value of the slider
             to the graph_drawer
           */
-
           graphDataFetcher.getArchiveDataForDisplay(this_obj.archive_date[ui.value - 1].id);
         } else {
           graphDataFetcher.updateDisabled = false;

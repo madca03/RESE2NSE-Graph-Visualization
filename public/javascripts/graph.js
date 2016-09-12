@@ -31,16 +31,17 @@ $(window).on("load", function() {
   ui.setTimeSlider();
 
   graphDataFetcher.getDataForDisplay(ui.archive_date);
-  // var display_timer = setInterval(function() {
-  //   if (!graphDataFetcher.updateDisabled) {
-  //     graphDataFetcher.getDataForDisplay(ui.archive_date);
-  //   }
-  // }, UPDATERATE);
+  var display_timer = setInterval(function() {
+    if (!graphDataFetcher.updateDisabled) {
+      console.log("hello");
+      graphDataFetcher.getDataForDisplay(ui.archive_date);
+    }
+  }, UPDATERATE);
 
-  setTimeout(function() {
-    graphDataFetcher.getDataForDisplay(ui.archive_date);
-    console.log("hello");
-  }, 3000);
+  // setTimeout(function() {
+  //   graphDataFetcher.getDataForDisplay(ui.archive_date);
+  //   console.log("hello");
+  // }, 3000);
 
   // function is called when the browser is resized
 
