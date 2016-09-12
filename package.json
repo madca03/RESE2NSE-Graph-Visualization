@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "nodemon ./bin/www",
     "setupdb": "npm run migratedb && npm run seeddb",
     "migratedb": "sequelize db:migrate",
     "seeddb": "python python/seed.py",
@@ -17,6 +17,7 @@
     "express": "~4.13.1",
     "morgan": "~1.6.1",
     "mysql": "^2.10.2",
+    "nodemon": "^1.10.2",
     "pg": "^6.0.2",
     "pg-hstore": "^2.3.2",
     "sequelize": "^3.19.0",

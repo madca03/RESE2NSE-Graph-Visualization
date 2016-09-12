@@ -18,30 +18,29 @@ var floorCount = $('.floor').length;
 // This wlll be the storage for all of the Floor objects.
 var floors = [];
 
+var dummy;
+
 var ui = new UI();
 var graphDataFetcher = new GraphDataFetcher(floorCount, floors);
 
-$(function() {
+// http://stackoverflow.com/questions/544993/official-way-to-ask-jquery-wait-for-all-images-to-load-before-executing-somethin
+/* wait for all images to load */
+$(window).on("load", function() {
   ui.init();
   var eventHandler = new EventHandler();
   ui.setTimeSlider();
 
-  graphDataFetcher.getDataForDisplay();
-  var display_timer = setInterval(function() {
-    if (!graphDataFetcher.updateDisabled) {
-      graphDataFetcher.getDataForDisplay();
-    }
-  }, UPDATERATE);
+  graphDataFetcher.getDataForDisplay(ui.archive_date);
+  // var display_timer = setInterval(function() {
+  //   if (!graphDataFetcher.updateDisabled) {
+  //     graphDataFetcher.getDataForDisplay(ui.archive_date);
+  //   }
+  // }, UPDATERATE);
 
-  // for (var i = 1; i <= 120; i++) {
-  //     setTimeout(function() {
-  //       graphData.getDataForDisplay();
-  //     }, 1000 * i);
-  // }
-
-  // setTimeout(function() {
-  //   graphDataFetcher.getDataForDisplay();
-  // }, 2000);
+  setTimeout(function() {
+    graphDataFetcher.getDataForDisplay(ui.archive_date);
+    console.log("hello");
+  }, 3000);
 
   // function is called when the browser is resized
 
@@ -58,9 +57,25 @@ $(function() {
   // }
 
 
+  $('.range-menu').change(function() {
+    var range_val = $(this).val();
+
+    var request = $.ajax({
+      url: BASEURL + "/datetime/" + range_val,
+      type: "GET",
+      dataType: "json",
+      context: this
+    });
+
+
+    request.done(function(_data, textStatus, jqXHR) {
+      ui.adjust_slider_range(_data.data);
+    });
+  });
+
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
-    clearInterval(display_timer);
+    // clearInterval(display_timer);
     eventHandler.editBtnClicked();
 
     // add event handler to cancel button

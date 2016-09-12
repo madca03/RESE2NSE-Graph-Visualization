@@ -2,11 +2,14 @@ var express = require('express');
 var router = express.Router();
 var models = require('../../models/index');
 
-router.get('/nodes/display', require('./floor-display.js'));
+// "/nodes/display/:archive_date_index"
+// router.get('/nodes/display', require('./floor-display.js'));
+router.get('/nodes/display/:archive_date_index', require('./floor-display.js'));
 router.get('/nodes/edit', require('./nodes-edit.js'));
 router.post('/nodes/update', require('./nodes-update.js'));
 router.get('/archive/date/:date_created_id', require('./floor-archive.js'));
 router.get('/nodes/:node_id', require('./node-display.js'));
+router.get('/datetime/:limit', require('./datetime.js'));
 
 /* GET home page. */
 router.get('/', function(req, res, next) {

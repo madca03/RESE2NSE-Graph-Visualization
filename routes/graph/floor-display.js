@@ -39,10 +39,9 @@ module.exports =  function(req, res, next) {
     + 'AND links_present.target_id '
       + 'IN (SELECT id FROM nodes WHERE coordinate_set = true);';
 
-  // var archive_date_query = 'SELECT CONVERT_TZ(datetime_archive, "+00:00", "+08:00") '
-  //   + 'AS datetime_archive FROM Datetime_archives ORDER BY id ASC;';
-  var archive_date_query = 'SELECT datetime_archive FROM datetime_archive;';
-
+  // var archive_date_query = 'SELECT * FROM datetime_archive;';
+  var archive_date_query = 'SELECT * FROM datetime_archive '
+    + 'WHERE id >= ' + req.params.archive_date_index + ';';
 
   models.sequelize.query(node_query, { type: models.sequelize.QueryTypes.SELECT })  // Query the nodes
     .then(function(nodes) {

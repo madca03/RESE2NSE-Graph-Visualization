@@ -24,10 +24,19 @@ function GraphDataFetcher(floorCount, floors) {
   * This function should only be called for the graph display of guest users.
   */
 
-GraphDataFetcher.prototype.getDataForDisplay = function() {
+GraphDataFetcher.prototype.getDataForDisplay = function(archive_date) {
+  var date_id;
+  if (archive_date.length === 0) {
+    /* query all of the archives */
+    date_id = 0;
+  } else {
+    date_id = archive_date[archive_date.length - 1].id;
+  }
+
   // ajax call for guest users
   var request = $.ajax({
-    url: BASEURL + "/nodes/display",
+    // url: BASEURL + "/nodes/display/" + date.id,
+    url: BASEURL + "/nodes/display/" + date_id,
     type: "GET",
     dataType: "json",
 
@@ -52,7 +61,8 @@ GraphDataFetcher.prototype.getDataForDisplay = function() {
       }
 
       // update the maximum value of the slider to the total archive count
-      ui.updateSliderRange(_data.data.date_archive_count);
+      // add the old archive_date length to the number of new archive_date
+      ui.updateSliderRange(archive_date.length + _data.data.date_archive_count);
       // update the array of archive dates stores in the UI object
       ui.updateArchiveDate(_data.data.date_archive);
     }
