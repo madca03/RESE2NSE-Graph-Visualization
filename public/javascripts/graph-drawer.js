@@ -4,21 +4,42 @@ function GraphDrawer() {
   this.nodes = [];
   this.links = [];
   this.svgStage = null;
-  this.width = ui.svgWidth;
-  this.height = ui.svgHeight;
+  // this.width = ui.svgWidth;
+  // this.height = ui.svgHeight;
   this.linkSelection = null;
   this.nodeSelection = null;
   this.force = null;
   this.forEdit = false;
   this.baseGraphContainerWidth = 866;
-  // this.baseGraphContainerHeight = 396;
-  this.baseGraphContainerHeight = ui.svgHeight;
-  // this.updateJustEnabled = floor.updateJustEnabled;
+  // this.baseGraphContainerHeight = ui.svgHeight;
+
+  this.graphDisplayed = false;
+  this.updateDisabled = false;
 }
+
+/**
+ * GraphDrawer.prototype.drawGraphDisplay
+ * GraphDrawer.prototype.setGraph
+ * GraphDrawer.prototype.createTooltip
+ */
 
 GraphDrawer.prototype.setGraph = function(graph) {
   this.nodes = graph.nodes;
   this.links = graph.links;
+}
+
+GraphDrawer.prototype.setDimensions = function(width, height) {
+  this.svgWidth = width;
+  this.svgHeight = height;
+}
+
+GraphDrawer.prototype.setWidth = function(width) {
+  this.width = width;
+}
+
+GraphDrawer.prototype.setHeight = function(height) {
+  this.height = height;
+  this.baseGraphContainerHeight = height;
 }
 
 GraphDrawer.prototype.createArrowHead = function() {
@@ -46,7 +67,7 @@ GraphDrawer.prototype.drawGraphDisplay = function() {
   this.getLinkSelection();
   this.getNodeSelection();
 
-  // this.scaleNodePosition();
+  // // this.scaleNodePosition();
   this.createSVGLinks();
   this.createSVGNodes();
 }
@@ -99,8 +120,8 @@ GraphDrawer.prototype.drawGraphForEdit = function() {
 
 GraphDrawer.prototype.initSVGStage = function() {
   this.svgStage = d3.select('.graph-container').append("svg")
-    .attr("width", this.width)
-    .attr("height", this.height);
+    .attr("width", this.svgWidth)
+    .attr("height", this.svgHeight);
 
   // add svg group elements for the links and nodes
   this.svgStage.append("g").attr("class", "links-group");
@@ -355,6 +376,8 @@ GraphDrawer.prototype.updateSVGNodeSelection = function() {
 }
 
 GraphDrawer.prototype.computeLinkCurvature = function() {
+  var thisObj = this;
+
   // The "d" attribute of the SVG path element specifies the type of path
   // that links the two nodes. In this case, the type of path is an arc
   this.linkSelection.attr("d", function(d) {
@@ -417,8 +440,8 @@ GraphDrawer.prototype.computeLinkCurvature = function() {
       py = 0;
     }
     // if the midpoint is near the bottom side of the svg stage
-    else if ((midy + linkRadius) > ui.svgHeight) {
-      py = ui.svgHeight;
+    else if ((midy + linkRadius) > thisObj.svgHeight) {
+      py = thisObj.svgHeight;
     }
 
     // if the midpoint is near the left side of the svg stage
@@ -426,8 +449,8 @@ GraphDrawer.prototype.computeLinkCurvature = function() {
         px = 0;
     }
     // if the midpoint is near the right side of the svg stage
-    else if ((midx + linkRadius) > ui.svgWidth) {
-      px = ui.svgWidth;
+    else if ((midx + linkRadius) > thisObj.svgWidth) {
+      px = thisObj.svgWidth;
     }
 
     // return a quadratic bezier curve
@@ -487,6 +510,8 @@ GraphDrawer.prototype.createSVGNodes = function() {
 }
 
 GraphDrawer.prototype.addClickEventToCircle = function(nodeCircle) {
+  var thisObj = this;
+
   nodeCircle.on("click", function() {
     var nodeID = this.__data__.id;
 
@@ -558,25 +583,30 @@ GraphDrawer.prototype.createNodeLabel = function() {
 }
 
 GraphDrawer.prototype.createTooltip = function() {
-  var singleGraphDrawerObj = this;
+  var thisObj = this;
 
-  // Add tooltip functionality to each circle SVG DOM element
-  // having a class name 'circle'
+  /* Add tooltip functionality to each circle SVG DOM element
+    having a class name 'circle'
+  */
   $('circle.circle').qtip({
-    // "this" currently points to a single circle SVG DOM element
+    /* "this" currently points to a single circle SVG DOM element */
     style: {
-      classes: 'custom-tooltip'  // add user-defined classes to the tooltip
+      classes: 'custom-tooltip'  /* add user-defined classes to the tooltip */
     },
     content: {
-      // $(this).prop("__data__") returns an object
-      // containing the node's properties
+      /* $(this).prop("__data__") returns an object
+        containing the node's properties
+      */
       title: function(event, api) {
         return $(this).prop("__data__").label;
       },
       text: function(event, api) {
-        var contents = singleGraphDrawerObj.tooltipContents($(this).prop("__data__"));
+        var contents = thisObj.tooltipContents($(this).prop("__data__"));
         return contents;
       }
+    },
+    hide: {
+      fixed: true
     }
   });
 }

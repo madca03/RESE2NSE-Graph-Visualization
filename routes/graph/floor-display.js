@@ -40,7 +40,8 @@ module.exports =  function(req, res, next) {
       + 'IN (SELECT id FROM nodes WHERE coordinate_set = true);';
 
   // var archive_date_query = 'SELECT * FROM datetime_archive;';
-  var archive_date_query = 'SELECT * FROM datetime_archive '
+  var archive_date_query = 'SELECT id, datetime_archive '
+    + 'FROM datetime_archive '
     + 'WHERE id >= ' + req.params.archive_date_index + ';';
 
   models.sequelize.query(node_query, { type: models.sequelize.QueryTypes.SELECT })  // Query the nodes

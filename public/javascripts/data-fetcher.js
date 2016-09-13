@@ -1,14 +1,20 @@
-/******************  GraphDataFetcher Class  ****************/
+/******************  DataFetcher Class  ****************/
 
-function GraphDataFetcher(floorCount, floors) {
-  this.floorCount = floorCount;
-  this.floors = floors;
-  this.graphDrawer = null;
+function DataFetcher() {
   this.initialDataFetch = true;
-
-  // temporarily place the attribute from MultiGraphDrawer here
-  this.graphDisplayed = false;
   this.updateDisabled = false;
+}
+
+DataFetcher.prototype.setWidth = function(width) {
+  this.svgWidth = width;
+}
+
+DataFetcher.prototype.setHeight = function(height) {
+  this.height = height;
+}
+
+DataFetcher.prototype.setBaseSVGWidth = function(width) {
+  this.baseSVGWidth = width;
 }
 
 /**
@@ -24,48 +30,32 @@ function GraphDataFetcher(floorCount, floors) {
   * This function should only be called for the graph display of guest users.
   */
 
-GraphDataFetcher.prototype.getDataForDisplay = function(archive_date) {
-  var date_id;
-  if (archive_date.length === 0) {
+DataFetcher.prototype.getDataForDisplay = function(archiveDate, callback) {
+  var dateId;
+  if (archiveDate.length === 0) {
     /* query all of the archives */
-    date_id = 0;
+    dateId = 0;
   } else {
-    date_id = archive_date[archive_date.length - 1].id;
+    /* if archiveDate is not empty, get the id of the last archiveDate */
+    dateId = archiveDate[archiveDate.length - 1].id;
   }
 
-  // ajax call for guest users
+  /* ajax call for guest users */
   var request = $.ajax({
-    // url: BASEURL + "/nodes/display/" + date.id,
-    url: BASEURL + "/nodes/display/" + date_id,
+    url: BASEURL + "/nodes/display/" + dateId,
     type: "GET",
     dataType: "json",
 
-    // Pass the GraphDataFetcher object to the ajax request so that it can be used
-    // on the ajax's function callbacks
+    /* Pass the DataFetcher object to the ajax request
+      so that it can be used on the ajax's function callbacks
+    */
     context: this
   });
 
   request.done(function(_data, textStatus, jqXHR) {
-    if (_data.data.date_archive_count > 0) {
-      this.modifyNodesForDisplay(_data.data.graph.nodes);
-      this.modifyLinks(_data.data.graph);
-
-      this.graphDrawer = new GraphDrawer();
-      this.graphDrawer.setGraph(_data.data.graph);
-
-      if (this.graphDisplayed) {  // if graph display if just for update
-        this.graphDrawer.updateGraphDisplay();
-      } else {  // if it's the first time to display the graph
-        this.graphDrawer.drawGraphDisplay();
-        this.graphDisplayed = true;
-      }
-
-      // update the maximum value of the slider to the total archive count
-      // add the old archive_date length to the number of new archive_date
-      ui.updateSliderRange(archive_date.length + _data.data.date_archive_count);
-      // update the array of archive dates stores in the UI object
-      ui.updateArchiveDate(_data.data.date_archive);
-    }
+    this.modifyNodesForDisplay(_data.data.graph.nodes);
+    this.modifyLinks(_data.data.graph);
+    callback(_data.data);
   });
 
   request.fail(function(jqXHR, textStatus, errorThrown) {
@@ -82,7 +72,7 @@ GraphDataFetcher.prototype.getDataForDisplay = function(archive_date) {
   * @param {object} graph - object containing the nodes and links
   * @return {array} modifiedLinks passed as property to graph object
   */
-GraphDataFetcher.prototype.modifyLinks = function(graph) {
+DataFetcher.prototype.modifyLinks = function(graph) {
   var modifiedLinks = [];
   var links = graph.links;
   var nodes = graph.nodes
@@ -126,13 +116,12 @@ GraphDataFetcher.prototype.modifyLinks = function(graph) {
   * @param {array} nodes - array of node objects on a given floor
   * @return {array} nodes - array of modified node objects
   */
-GraphDataFetcher.prototype.modifyNodesForDisplay = function(nodes) {
+DataFetcher.prototype.modifyNodesForDisplay = function(nodes) {
   for (var i = 0; i < nodes.length; i++) {
-    nodes[i].scaledX = (ui.svgWidth * nodes[i].x_coordinate) / ui.baseSVGWidth;
+    nodes[i].scaledX = (this.svgWidth * nodes[i].x_coordinate) / this.baseSVGWidth;
     /* TODO: don't scale the y_coordinate positioning of the node. It should be
       independent of the browser width. No need to scale the height for
       responsive design */
-    // nodes[i].scaledY = (ui.svgHeight * nodes[i].y_coordinate) / ui.baseSVGHeight;
     nodes[i].scaledY = nodes[i].y_coordinate;
   }
 }
@@ -141,7 +130,7 @@ GraphDataFetcher.prototype.modifyNodesForDisplay = function(nodes) {
 /**
   * This method gets all of the nodes from the server.
   */
-GraphDataFetcher.prototype.getDataForEdit = function() {
+DataFetcher.prototype.getDataForEdit = function() {
   // ajax call to get graph data
   var request = $.ajax({
     url: BASEURL + '/nodes/edit',
@@ -176,7 +165,7 @@ GraphDataFetcher.prototype.getDataForEdit = function() {
  * @return array of graph dataset where each graph dataset element
  *    corresponds to one floor.
  */
-GraphDataFetcher.prototype.getGraphPerFloor = function(graphData) {
+DataFetcher.prototype.getGraphPerFloor = function(graphData) {
   if (this.initialDataFetch) {
     // set the initialDataFetch attribute to false so that this will not be
     // executed for the next graph update
@@ -231,7 +220,7 @@ GraphDataFetcher.prototype.getGraphPerFloor = function(graphData) {
  * @param {Number} floorNumber: the floor to be updated with the archive graph data.
  * @param {Number} dateArchiveID: the ID of the archive date in the database.
  */
-GraphDataFetcher.prototype.getArchiveDataForDisplay = function(dateArchiveID) {
+DataFetcher.prototype.getArchiveDataForDisplay = function(dateArchiveID) {
   var request = $.ajax({
     url: BASEURL + "/archive/date/" + dateArchiveID,
     type: "GET",
@@ -263,4 +252,4 @@ GraphDataFetcher.prototype.getArchiveDataForDisplay = function(dateArchiveID) {
   });
 }
 
-/****************  END GraphDataFetcher Class  **************/
+/****************  END DataFetcher Class  **************/

@@ -9,7 +9,7 @@ router.get('/nodes/edit', require('./nodes-edit.js'));
 router.post('/nodes/update', require('./nodes-update.js'));
 router.get('/archive/date/:date_created_id', require('./floor-archive.js'));
 router.get('/nodes/:node_id', require('./node-display.js'));
-router.get('/datetime/:limit', require('./datetime.js'));
+router.get('/datetime/:type/:range', require('./datetime.js'));
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
