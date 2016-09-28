@@ -80,6 +80,27 @@ Slider.prototype.changeTimeDisplay = function(datetime) {
   $('.slider-time').html(date.toLocaleString('en-us', dateOptions));
 }
 
+Slider.prototype.storeArchiveDate = function(archiveDate, newArchive) {
+  var range_val = $('.range-menu').val();
+
+  /* if the current value of the range selector is not "all_all" then pop N old
+    entries where N = the length of the newArchive array. After pop, push the
+    new archive entries.
+  */
+  if (range_val !== "all_all") {
+    for (var i = 0; i < newArchive.length; i++) {
+      archiveDate.pop();
+    }
+
+    archiveDate.push.apply(archiveDate, newArchive);
+  }
+  /*
+  */
+  else {
+    archiveDate.push.apply(archiveDate, newArchive);
+  }
+}
+
 Slider.prototype.adjustSlider = function(archiveDate, newArchive, range_str) {
   this.adjustSliderRange(archiveDate, newArchive);
   // this.adjustSliderHandlePosition(range_str);
@@ -87,12 +108,6 @@ Slider.prototype.adjustSlider = function(archiveDate, newArchive, range_str) {
 
 Slider.prototype.adjustSliderHandlePosition = function(range_str, archiveDate) {
   var new_range = this.range_value_enum[range_str];
-  // console.log("range_str " + range_str);
-  // console.log("new range");
-  // console.log(new_range);
-  // console.log("current_range");
-  // console.log(this.current_range);
-
   var slider_min = $('.slider-range').slider('option', 'min');
   var slider_val = $('.slider-range').slider('option', 'value');
   var slider_max = $('.slider-range').slider('option', 'max');

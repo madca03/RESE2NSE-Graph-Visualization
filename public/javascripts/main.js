@@ -25,8 +25,6 @@ $(window).on("load", function() {
   var eventHandler = new EventHandler();
   var graphDrawer = new GraphDrawer();
 
-  dummy = graph;
-
   ui.init();
   slider.init(dataFetcher, graph);
   graphDrawer.setDimensions(ui.svgWidth, ui.svgHeight);
@@ -55,22 +53,25 @@ $(window).on("load", function() {
 
       /* update the array of archive dates */
       // http://stackoverflow.com/questions/1374126/how-to-extend-an-existing-javascript-array-with-another-array-without-creating
-      graph.archiveDate.push.apply(graph.archiveDate, data.date_archive);
+      // graph.archiveDate.push.apply(graph.archiveDate, data.date_archive);
 
+      slider.storeArchiveDate(graph.archiveDate, data.date_archive);
       slider.updateSliderRange(graph.archiveDate.length);
       slider.updateArchiveDate(graph.archiveDate);
     });
   }
 
+  // dummy = displayGraph;
+  dummy = graph;
   displayGraph();
-  var display_timer = setInterval(function() {
-    if (!dataFetcher.updateDisabled) {
-      // displayGraph();
-    }
-  }, UPDATERATE);
+  // var display_timer = setInterval(function() {
+  //   if (!dataFetcher.updateDisabled) {
+  //     displayGraph();
+  //   }
+  // }, UPDATERATE);
 
   // setTimeout(function() {
-  //   dataFetcher.getDataForDisplay(ui.archive_date);
+  //   displayGraph();
   //   console.log("hello");
   // }, 3000);
 
@@ -98,8 +99,11 @@ $(window).on("load", function() {
       range = $(this).val().split("_");
     }
 
+    var last_entry_id = graph.archiveDate[graph.archiveDate.length - 1].id;
+
     var request = $.ajax({
-      url: BASEURL + "/datetime/" + range[0] + "/" + range[1],
+      url: BASEURL + "/datetime/" + range[0] + "/" + range[1]
+        + "/" + last_entry_id,
       type: "GET",
       dataType: "json",
       context: this
