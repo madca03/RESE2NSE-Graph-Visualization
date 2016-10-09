@@ -9,6 +9,11 @@ router.get('/archive/date/:date_created_id', require('./floor-archive.js'));
 router.get('/nodes/:node_id', require('./node-display.js'));
 router.get('/datetime/:type/:range/:last_entry_id', require('./datetime.js'));
 
+router.get('/api/contour', require('./contour.js'));
+router.get('/api/temperature', require('./temperature.js'));
+
+router.get('/contour', require('./display-contour.js'));
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index');

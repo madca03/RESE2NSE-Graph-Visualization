@@ -140,7 +140,7 @@ GraphDrawer.prototype.initSVGStage = function() {
 GraphDrawer.prototype.initForceLayout = function() {
   this.force = d3.layout.force()
     .nodes(this.nodes)
-    .size([ui.svgWidth, ui.svgHeight])
+    .size([this.svgWidth, this.svgHeight])
     .start();
 }
 

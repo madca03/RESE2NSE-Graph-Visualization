@@ -18,21 +18,6 @@ EventHandler.prototype.editBtnClicked = function() {
   $('.floor-label').append("<button type='button' class='success button save-btn'>Save Graph</button>");
   $('.floor-label').append("<button type='button' class='success button cancel-btn'>Cancel</button>");
   $('.graph-container svg').remove();
-  // remove all DOM elements inside the floor-group div <- TODO: don't remove anymore
-  /* since there will be only one picture, just retain the whole graph */
-  // var floor_group = $('.floor-group')[0];
-  // while (floor_group.firstChild) {
-  //   floor_group.removeChild(floor_group.firstChild);
-  // }
-
-  // add css properties to the floor image
-  // var newFloorImg = $('.floor-img')[0];
-  // newFloorImg.style.width = ui.svgWidth.toString() + 'px';
-  // newFloorImg.style.height = ui.svgHeight.toString() + 'px';
-  // newFloorImg.style.position = 'absolute';
-  // newFloorImg.style.zIndex = '-1';
-  //
-  graphDataFetcher.getDataForEdit();
 }
 
 /**
@@ -101,9 +86,8 @@ EventHandler.prototype.cancelBtnClicked = function() {
   location.reload();
 }
 
-EventHandler.prototype.saveBtnClicked = function() {
-  var updatedNodes = this.getUpdatedNodes();
-  console.log(updatedNodes);
+EventHandler.prototype.saveBtnClicked = function(updatedNodes) {
+  // var updatedNodes = this.getUpdatedNodes();
 
   // if there are modified nodes
   if (updatedNodes.length !== 0) {

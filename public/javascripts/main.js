@@ -61,14 +61,21 @@ $(window).on("load", function() {
     });
   }
 
+  function displayGraphForEdit() {
+    dataFetcher.getDataForEdit(function(data) {
+      graphDrawer.setGraph(data.graph);
+      graphDrawer.drawGraphForEdit();
+    });
+  }
+
   // dummy = displayGraph;
-  dummy = graph;
-  displayGraph();
-  // var display_timer = setInterval(function() {
-  //   if (!dataFetcher.updateDisabled) {
-  //     displayGraph();
-  //   }
-  // }, UPDATERATE);
+  // dummy = graph;
+  // displayGraph();
+  var display_timer = setInterval(function() {
+    if (!dataFetcher.updateDisabled) {
+      displayGraph();
+    }
+  }, UPDATERATE);
 
   // setTimeout(function() {
   //   displayGraph();
@@ -90,6 +97,33 @@ $(window).on("load", function() {
   //   }, UPDATERATE);
   // }
 
+  function getUpdatedNodes() {
+    /* graphDataFetcher.graphDrawer property is of type SingleGraphDrawer
+      When the edit button is clicked, the graphDrawer is set to draw
+      a single graph for the floor selected. This graphDrawer object of type
+      SingleGraphDrawer also contains the information about the nodes.
+    */
+
+    var nodes = graphDrawer.nodes;
+    var modifiedNodes = [];
+
+    /* The properties node.x and node.y come from the force layout of d3js.
+      The "moved" property is set to true in the dragstart function of d3js
+      if a node is dragged.
+    */
+
+    for (var i = 0; i < nodes.length; i++) {
+      if (typeof(nodes[i].moved) !== 'undefined' && nodes[i].moved == true) {
+        modifiedNodes.push({
+          'id': nodes[i].id,
+          'x_coordinate': nodes[i].x,
+          'y_coordinate': nodes[i].y
+        });
+      }
+    }
+
+    return modifiedNodes;
+  }
 
   $('.range-menu').change(function() {
     var range;
@@ -117,8 +151,9 @@ $(window).on("load", function() {
 
   // add click event listener to edit graph button
   $('.edit-btn').on('click', function() {
-    // clearInterval(display_timer);
+    clearInterval(display_timer);
     eventHandler.editBtnClicked();
+    displayGraphForEdit();
 
     // add event handler to cancel button
     $('.cancel-btn').on('click', function() {
@@ -127,7 +162,8 @@ $(window).on("load", function() {
 
     // add event handler to save button
     $('.save-btn').on('click', function() {
-      eventHandler.saveBtnClicked();
+      var updatedNodes = getUpdatedNodes();
+      eventHandler.saveBtnClicked(updatedNodes);
     });
   });
 }); // end application block

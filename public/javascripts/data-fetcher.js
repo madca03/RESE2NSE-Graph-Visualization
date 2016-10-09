@@ -17,6 +17,49 @@ DataFetcher.prototype.setBaseSVGWidth = function(width) {
   this.baseSVGWidth = width;
 }
 
+DataFetcher.prototype.getDataForContour = function(callback) {
+  var request = $.ajax({
+    url: BASEURL + '/api/contour',
+    type: 'GET',
+    dataType: 'json',
+    context: this
+  });
+
+  request.done(function(_data, textStatus, jqXHR) {
+    callback(_data.data);
+  });
+
+  request.fail(function(jqXHR, textStatus, errorThrown) {
+    console.log(textStatus, errorThrown);
+  });
+}
+
+/**
+  * This method gets all of the nodes from the server.
+  */
+DataFetcher.prototype.getDataForEdit = function(callback) {
+  // ajax call to get graph data
+  var request = $.ajax({
+    url: BASEURL + '/nodes/edit',
+    type: 'GET',
+    dataType: 'json',
+    context: this
+  });
+
+  request.done(function(_data, textStatus, jqXHR) {
+    /* third argument of Floor constructor is for the array of links. But
+      since the admin user is only concerned in the editing of the position
+      of the nodes, the present links doesn't matter. That's why we just pass
+      null for the links array in the Floor constructor.
+    */
+    callback(_data.data);
+  });
+
+  request.fail(function(jqXHR, textStatus, errorThrown) {
+    console.log(textStatus, errorThrown);
+  });
+};
+
 /**
   * This function gets the graph data containing the nodes with their
   * coordinates set and the links in between nodes. After a successful AJAX
@@ -124,37 +167,6 @@ DataFetcher.prototype.modifyNodesForDisplay = function(nodes) {
       responsive design */
     nodes[i].scaledY = nodes[i].y_coordinate;
   }
-}
-
-
-/**
-  * This method gets all of the nodes from the server.
-  */
-DataFetcher.prototype.getDataForEdit = function() {
-  // ajax call to get graph data
-  var request = $.ajax({
-    url: BASEURL + '/nodes/edit',
-    type: 'GET',
-    dataType: 'json',
-    context: this
-  });
-
-  request.done(function(_data, textStatus, jqXHR) {
-    /* third argument of Floor constructor is for the array of links. But
-      since the admin user is only concerned in the editing of the position
-      of the nodes, the present links doesn't matter. That's why we just pass
-      null for the links array in the Floor constructor.
-    */
-    // var floor_for_edit = new Floor(floorNumber, nodes, null);
-    //
-    this.graphDrawer = new GraphDrawer();
-    this.graphDrawer.setGraph(_data.data.graph);
-    this.graphDrawer.drawGraphForEdit();
-  });
-
-  request.fail(function(jqXHR, textStatus, errorThrown) {
-    console.log(textStatus, errorThrown);
-  });
 }
 
 /**
